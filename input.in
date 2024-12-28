@@ -1,0 +1,26 @@
+###################################
+INLET THERMODYNAMIC PROPERTIES
+###################################
+FLUID: AIR
+PRESSURE: 101325
+TEMPERATURE: 288.15
+###################################
+OPERATING CONDITION
+###################################
+SPEED: 14000
+MASS_FLOW: 5.32
+INLET_FLOW_ANGLE: 0.0
+###################################
+GEOMETRY
+###################################
+R1H: 45.0
+R1T: 140.0
+R2: 200.0
+B2: 26.0
+BETA1H: -32.0
+BETA1T: -63.0
+BETA2: 0.0
+BLOCKAGE1: 0.0
+BLOCKAGE2: 0.0
+NUM_BLADES: 20
+AXIAL_LENGTH_RATIO: 0.35

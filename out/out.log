@@ -1,0 +1,8 @@
+Impeller leading edge:
+Pressure(Pa)   Temperature(K) H0(kJ/kg)      s0(kJ/kg-K)    A(mm^2)        Athroat(mm^2)  
+97324          284.84         414374.57      3846.16        55213.49       35516.39       
+
+Station   Dia(mm)   C(m/s)    W(m/s)    U(m/s)    Mrel      Beta(deg)   Beta'(deg)  Inc(deg)    
+Hub:      45.0      81.36     104.75    65.97     0.3095    -32.00      -39.04      7.04        
+RMS:      104.0     81.36     172.80    152.45    0.5106    -49.96      -61.91      11.95       
+Shroud:   140.0     81.36     220.79    205.25    0.6524    -63.00      -68.38      5.38        
