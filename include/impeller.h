@@ -28,7 +28,7 @@ public:
 	Geometry geom;
 
     ImpellerState(const std::string& fluid_name = "AIR");
-	ImpellerState(ThermoProps thermo, const Geometry& geom);
+	ImpellerState(const ThermoProps& thermo, const Geometry& geom);
     ImpellerState(const ImpellerState& other);
     ImpellerState& operator=(const ImpellerState& other);
 };
