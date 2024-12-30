@@ -48,6 +48,10 @@ Geometry filterFileContent_geom(const std::map<std::string, std::string>& fileCo
     setPropertyFromFileContent(fileContent, key, geom.r1h);
     key = keyToString(FileKey::R1T);
     setPropertyFromFileContent(fileContent, key, geom.r1t);
+    key = keyToString(FileKey::R2);
+    setPropertyFromFileContent(fileContent, key, geom.r2);
+    key = keyToString(FileKey::B2);
+    setPropertyFromFileContent(fileContent, key, geom.b2);
 
     if (geom.r1h > 0 && geom.r1t > 0) {
         geom.r1rms = getRMS(geom.r1h, geom.r1t);

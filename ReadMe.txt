@@ -2,7 +2,7 @@ The goal with the backend is to have a stand alone implementation of the model t
 That way the model can get developed and abstracted so the gui only relies on the abstraction.
 To-do:
 [ ] Add in some terminal controls
-[ ] Finish implementing single zone Japikse model
+[x] Finish implementing single zone Japikse model
 [ ] Review radcomp
 [ ] Implement the radcomp model
 [ ] Review other github repo found (forgot the name)

@@ -36,14 +36,21 @@ class Impeller {
     ImpellerState inlet;
     ImpellerState outlet;
     OperatingCondition op;
+    double pr_tt, isentropicEfficiency, workCoefficient, Re_b2, Re_r2, dH0;
 
     Impeller(ImpellerState& inlet, ImpellerState& outlet, const OperatingCondition& op);
     Impeller(ThermoProps thermo, Geometry geom, const OperatingCondition& op);
 
     void calculateInletCondition(std::string solverType);
     std::optional<double> inletJapikseSolver(double Mguess, int maxIterations, double tolerance);
-    void calculateInletVelocities(ImpellerState* inlet, const OperatingCondition& op);
-    void printInletVelocities();
+    void calculateInletVelocities();
+    void printOutputFile();
+
+    void calculateOutletCondition(std::string solverType, std::string slipModel);
+    std::optional<double> outletJapikseSolver(int maxIterations, double tolerance, double rotorEfficiency);
+    void calculateOutletVelocities();
+
+    void calculateSlip(std::string slipModel);
 };
 
 #endif  // IMPELLER_H

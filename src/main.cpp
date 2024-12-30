@@ -9,7 +9,6 @@
 #include "../include/tgParser.h"
 #include "../include/thermo.h"
 
-
 int main(int argc, char** argv) {
 #ifdef DEBUG
     std::cout << "DEBUG mode is active.\n";
@@ -48,6 +47,7 @@ int main(int argc, char** argv) {
 
     Impeller impeller(thermo, geom, op);
     impeller.calculateInletCondition("Japikse");
+    impeller.calculateOutletCondition("Japikse", "Wiesner");
 
     return 0;
 }
