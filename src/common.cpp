@@ -1,20 +1,20 @@
-#include <cmath>
-#include <iostream>
-#include <optional>
-#include <map>
-#include <string>
-
 #include "../include/common.h"
 
+#include <cmath>
+#include <iostream>
+#include <map>
+#include <optional>
+#include <string>
 
 std::optional<double> tryConvertingStrToDouble(const std::string& var) {
-    try { return std::stod(var); }
-    catch (const std::exception& e) {
-        std::cerr << "Error converting \"" << var << "\" to double: " << e.what() << " (Input length: " << var.size() << ")\n";
+    try {
+        return std::stod(var);
+    } catch (const std::exception& e) {
+        std::cerr << "Error converting \"" << var << "\" to double: " << e.what() << " (Input length: " << var.size()
+                  << ")\n";
         return std::nullopt;
     }
 }
-
 
 std::string keyToString(FileKey key) {
     for (const auto& pair : fileKeyStrings) {
@@ -24,7 +24,6 @@ std::string keyToString(FileKey key) {
     }
     throw std::invalid_argument("Unknown FileKey");
 }
-
 
 OperatingCondition filterFileContent_op(const std::map<std::string, std::string>& fileContent) {
     OperatingCondition op{};
@@ -42,7 +41,6 @@ OperatingCondition filterFileContent_op(const std::map<std::string, std::string>
 
     return op;
 }
-
 
 Geometry filterFileContent_geom(const std::map<std::string, std::string>& fileContent) {
     Geometry geom{};
@@ -72,13 +70,12 @@ Geometry filterFileContent_geom(const std::map<std::string, std::string>& fileCo
     key = keyToString(FileKey::AXIAL_LENGTH_RATIO);
     setPropertyFromFileContent(fileContent, key, geom.axialLengthRatio);
 
-    geom.area1 = (1.-geom.blockage1) * PI*(pow((geom.r1t*MM_M),2) - pow((geom.r1h*MM_M),2));
-    geom.area2 = (2 * PI * (geom.r2*MM_M) * (geom.b2*MM_M)) * (1.0 - geom.blockage2);
-    geom.throatArea = geom.area1 * cos(std::abs(geom.beta1rms)*DEG_RAD);
+    geom.area1 = (1. - geom.blockage1) * PI * (pow((geom.r1t * MM_M), 2) - pow((geom.r1h * MM_M), 2));
+    geom.area2 = (2 * PI * (geom.r2 * MM_M) * (geom.b2 * MM_M)) * (1.0 - geom.blockage2);
+    geom.throatArea = geom.area1 * cos(std::abs(geom.beta1rms) * DEG_RAD);
 
     return geom;
 }
-
 
 ThermoProps filterFileContent_thermo(const std::map<std::string, std::string>& fileContent) {
     try {
@@ -99,7 +96,4 @@ ThermoProps filterFileContent_thermo(const std::map<std::string, std::string>& f
     }
 }
 
-
-double getRMS(const double& val1, const double& val2) {
-    return sqrt((val1 * val1 + val2 * val2) / 2.0);
-}
+double getRMS(const double& val1, const double& val2) { return sqrt((val1 * val1 + val2 * val2) / 2.0); }

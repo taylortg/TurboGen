@@ -10,7 +10,9 @@
 #include <sstream>
 #include <string>
 
+#include "../externals/fmt/include/fmt/color.h"
 #include "../externals/fmt/include/fmt/core.h"
+
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //          ImpellerState class
@@ -69,15 +71,12 @@ std::optional<double> Impeller::inletJapikseSolver(double Mguess = 0.3, int maxI
                                                    double tolerance = 1e-6) {
     int iteration = 1;
     double error = 1.0;
-    std::ostringstream oss;
-    fmt::print("{:=<65}\n", "");
-    oss << "Entered impeller inlet solver loop!\n"
-        << "Solver: Japikse\n"
-        << "Convergence tolerance: " << tolerance << "\n"
-        << "Maximum iterations: " << maxIterations << "\n"
-        << "====================================================================="
-           "==========================\n";
-    std::cout << oss.str();
+
+    std::string border = fmt::format("{:=<90}\n", "");
+    fmt::print(
+        "{}Entered impeller inlet solver loop!\nSolver: Japikse\nConvergence tolerance: {:.2e}\nMaximum iterations: "
+        "{}\n{}",
+        border, tolerance, maxIterations, border);
 
 // This is only here to indicate if there are issues with the solver. The
 // execution time of the while loop should be incredibly small. If you see it is
@@ -97,11 +96,9 @@ std::optional<double> Impeller::inletJapikseSolver(double Mguess = 0.3, int maxI
         error = std::abs((Mguess - inlet.tip.M) / Mguess);
         Mguess = inlet.tip.M;
 
-        std::cout << "Iteration: " << iteration << "\n";
-        std::cout << std::setw(10) << std::fixed << std::setprecision(0) << "Pressure: " << inlet.static_.props.P
-                  << std::setw(10) << std::fixed << std::setprecision(2) << "  Temperature: " << inlet.static_.props.T
-                  << std::setw(10) << std::fixed << std::setprecision(6) << "  Mach: " << inlet.tip.M << std::setw(10)
-                  << std::fixed << std::setprecision(8) << "  Error: " << error << "\n";
+        fmt::print("Iteration {}\n", iteration);
+        fmt::print("Pressure: {:<10.0f}Temperature: {:<10.2f}Mach: {:<10.6f}Error:{:<10.4e}\n", inlet.static_.props.P,
+                   inlet.static_.props.T, inlet.tip.M, error);
 
         iteration++;
     } while (iteration <= maxIterations && error > tolerance);
@@ -112,8 +109,7 @@ std::optional<double> Impeller::inletJapikseSolver(double Mguess = 0.3, int maxI
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms\n";
 #endif
 
-    std::cout << "==============================================================="
-                 "================================\n";
+    fmt::print("{}", border);
     inlet.rms.C_m = inlet.tip.C_m;
     inlet.hub.C_m = inlet.tip.C_m;
     inlet.rms.M = inlet.tip.M;
@@ -122,10 +118,10 @@ std::optional<double> Impeller::inletJapikseSolver(double Mguess = 0.3, int maxI
     calculateInletVelocities(&inlet, op);
 
     if (error <= tolerance) {
-        std::cout << "Solution converged!\n";
+        fmt::print(fg(fmt::color::green), "Solution converged!\n");
         return inlet.static_.props.P;
     } else {
-        std::cout << "Solution did not converge, results could be inaccurate!\n";
+        fmt::print(fg(fmt::color::red), "Solution did not converge, results could be inaccurate!\n");
         return std::nullopt;
     }
 }

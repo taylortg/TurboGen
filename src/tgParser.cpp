@@ -1,9 +1,10 @@
+#include "../include/tgParser.h"
+
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <string>
 
-#include "../include/tgParser.h"
 
 namespace tgparser {
 std::map<std::string, std::string> readInputFile(const std::string& f) {
@@ -20,7 +21,7 @@ std::map<std::string, std::string> readInputFile(const std::string& f) {
         if (line.find(':') != std::string::npos) {
             size_t pos = line.find(':');
             std::string key = line.substr(0, pos);
-            std::string value = line.substr(pos + 2);     // +2 for 1 whitespace
+            std::string value = line.substr(pos + 2);  // +2 for 1 whitespace
             fileContent[key] = value;
         }
     }
@@ -28,4 +29,4 @@ std::map<std::string, std::string> readInputFile(const std::string& f) {
     std::cout << f << " has been successfully parsed.\n";
     return fileContent;
 }
-}
+}  // namespace tgparser

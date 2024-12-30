@@ -1,7 +1,8 @@
+#include "../include/thermo.h"
+
 #include <iomanip>
 #include <string>
 
-#include "../include/thermo.h"
 
 void ThermoProps::set_props(std::string const& input_pair_, double const& val1, double const& val2) {
     if (input_pair_ == "PT") {
@@ -13,8 +14,7 @@ void ThermoProps::set_props(std::string const& input_pair_, double const& val1, 
                 return;
             }
             state->update(CoolProp::PT_INPUTS, val1, val2);
-        }
-        catch (const std::exception& e) {
+        } catch (const std::exception& e) {
             std::cerr << "CoolProp error: " << e.what() << std::endl;
             return;
         }

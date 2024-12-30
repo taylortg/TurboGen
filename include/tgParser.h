@@ -6,9 +6,8 @@
 #include <map>
 #include <string>
 
-
 namespace tgparser {
 std::map<std::string, std::string> readInputFile(const std::string& f);
 }
 
-#endif // TGPARSER_H
+#endif  // TGPARSER_H
