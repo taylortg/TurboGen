@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/externals/CoolProp/include/**",
-                "${workspaceFolder}/externals/fmt/include/**"
+                "${workspaceFolder}/externals/fmt/include/**",
+                "${workspaceFolder}/externals/matplotplusplus/source/**"
             ],
             "defines": [
                 "_DEBUG",

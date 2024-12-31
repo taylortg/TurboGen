@@ -1,5 +1,5 @@
 Impeller leading edge:
-P0(Pa)         T0(K)          H0(kJ/kg)      s0(kJ/kg-K)    A(mm^2)        Athroat(mm^2)  
+P(Pa)          T(K)           H0(kJ/kg)      s0(kJ/kg-K)    A(mm^2)        Athroat(mm^2)  
 97324          284.84         414374.57      3846.16        55213.49       35516.39       
 
 Station   Dia(mm)   C(m/s)    W(m/s)    U(m/s)    Mrel      Beta(deg)   Beta'(deg)  Inc(deg)    

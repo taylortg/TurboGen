@@ -87,7 +87,11 @@
         "stop_token": "cpp",
         "thread": "cpp",
         "typeindex": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "future": "cpp",
+        "random": "cpp",
+        "regex": "cpp",
+        "unordered_set": "cpp"
     },
     "clang-format.executable": "C:/Program Files/LLVM/bin/clang-format.exe",
     "editor.formatOnSave": true,

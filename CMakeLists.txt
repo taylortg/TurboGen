@@ -28,10 +28,13 @@ add_executable(TurboGen
     src/tgParser.cpp
     src/thermo.cpp
     src/impeller.cpp
+    src/plotter.cpp
 )
 
 # Include CoolProp and fmt headers
-target_include_directories(TurboGen PRIVATE ${COOLPROP_INCLUDE_DIR} ${fmt_INCLUDE_DIR})
+target_include_directories(TurboGen PRIVATE ${COOLPROP_INCLUDE_DIR} 
+    ${fmt_INCLUDE_DIR}
+)
 
 # Link to the fmt shared library and CoolProp static library
 target_link_libraries(TurboGen PRIVATE 

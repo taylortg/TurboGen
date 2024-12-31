@@ -1,3 +1,4 @@
+#include <cmath>
 #include <iostream>
 #include <thread>
 
@@ -6,6 +7,7 @@
 #include "../externals/fmt/include/fmt/core.h"
 #include "../include/common.h"
 #include "../include/impeller.h"
+#include "../include/plotter.h"
 #include "../include/tgParser.h"
 #include "../include/thermo.h"
 
@@ -48,6 +50,8 @@ int main(int argc, char** argv) {
     Impeller impeller(thermo, geom, op);
     impeller.calculateInletCondition("Japikse");
     impeller.calculateOutletCondition("Japikse", "Wiesner");
+
+    plotVelocityTriangle(impeller);
 
     return 0;
 }
