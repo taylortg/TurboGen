@@ -3,6 +3,6 @@
 
 #include "impeller.h"
 
-void plotVelocityTriangle(const Impeller& impeller);
+void plotVelocityTriangle(const Impeller& impeller, bool htmlFlag);
 
 #endif  // PLOTTER_H

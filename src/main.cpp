@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     impeller.calculateInletCondition("Japikse");
     impeller.calculateOutletCondition("Japikse", "Wiesner");
 
-    plotVelocityTriangle(impeller);
+    plotVelocityTriangle(impeller, true);
 
     return 0;
 }
