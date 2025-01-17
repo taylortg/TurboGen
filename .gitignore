@@ -1,4 +1,4 @@
 build
 externals/fmt
-externals/matplotplusplus
-externals/nodesoup
+utils/build-utils
+utils/CADfunctions/a.exe
