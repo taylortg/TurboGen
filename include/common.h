@@ -104,6 +104,7 @@ struct Geometry {
     double blockage2;
     double Z;
     double axialLengthRatio;
+    double axialLength;
     double area1;
     double area2;
     double throatArea;

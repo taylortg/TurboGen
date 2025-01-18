@@ -1,18 +1,18 @@
 Impeller leading edge:
 P(Pa)          T(K)           H0(kJ/kg)      s0(kJ/kg-K)    A(mm^2)        Athroat(mm^2)  
-97324          284.84         414374.57      3846.16        55213.49       35516.39       
+414375         3846.16        414374.57      3846.16        55213.49       35516.39       
 
 Station   Dia(mm)   C(m/s)    W(m/s)    U(m/s)    Mrel      Beta(deg)   Beta'(deg)  Inc(deg)    
-Hub:      45.0      81.36     104.75    65.97     0.3095    -32.00      -39.04      7.04        
-RMS:      104.0     81.36     172.80    152.45    0.5106    -49.96      -61.91      11.95       
-Shroud:   140.0     81.36     220.79    205.25    0.6524    -63.00      -68.38      5.38        
+Hub:      45.0      0.00      0.00      0.00      0.0000    -32.00      0.00        0.00        
+RMS:      104.0     0.00      0.00      0.00      0.0000    -49.96      0.00        0.00        
+Shroud:   140.0     0.00      0.00      0.00      0.0000    -63.00      0.00        0.00        
 
 Impeller exit
 Dia(mm)        Tip width(mm)  P0(Pa)         P(Pa)          T0(K)          H0(kJ/kg)      s0(kJ/kg-K)    U(m/s)         M_U            
 200.00         26.000         214012         144549         362.72         489352.07      3862.96        293.22         0.7679         
 
 M_rms          W_rms(m/s)     C_rms(m/s)     Alpha(deg)     Beta(deg)      W ratio        
-0.770          111.39         277.96         67.72          -18.86         0.645          
+0.770          111.39         277.96         67.72          -18.86         inf            
 
 Overall Performance
 pr_tt          dH/U^2         dH0(kJ/kg)     Re_b2          Re_r2          

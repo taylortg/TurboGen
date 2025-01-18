@@ -49,9 +49,9 @@ int main(int argc, char** argv) {
 
     Impeller impeller(thermo, geom, op);
     impeller.calculateInletCondition("Japikse");
-    impeller.calculateOutletCondition("Japikse", "Wiesner");
-
-    plotVelocityTriangle(impeller, true);
+    // impeller.calculateOutletCondition("Japikse", "Wiesner");
+    // impeller.estimateAxialLength();
+    // plotVelocityTriangle(impeller, true);
 
     return 0;
 }

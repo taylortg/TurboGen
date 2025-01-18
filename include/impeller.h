@@ -23,10 +23,9 @@ class ImpellerState {
     Velocities hub;
     Velocities rms;
     Velocities tip;
-    Geometry geom;
 
     ImpellerState(const std::string& fluid_name = "AIR");
-    ImpellerState(const ThermoProps& thermo, const Geometry& geom);
+    ImpellerState(const ThermoProps& thermo);
     ImpellerState(const ImpellerState& other);
     ImpellerState& operator=(const ImpellerState& other);
 };
@@ -36,21 +35,33 @@ class Impeller {
     ImpellerState inlet;
     ImpellerState outlet;
     OperatingCondition op;
-    double pr_tt, isentropicEfficiency, workCoefficient, Re_b2, Re_r2, dH0;
+    Geometry geom;
+    double pr_tt, isenEff, flowCoeff, workCoeff, Re_b2, Re_r2, dH0;
 
-    Impeller(ImpellerState& inlet, ImpellerState& outlet, const OperatingCondition& op);
-    Impeller(ThermoProps thermo, Geometry geom, const OperatingCondition& op);
+    Impeller(ImpellerState& inlet, ImpellerState& outlet, const OperatingCondition& op, const Geometry& geom);
+    Impeller(ThermoProps thermo, const Geometry& geom, const OperatingCondition& op);
 
+    // Driver functions
     void calculateInletCondition(std::string solverType);
-    std::optional<double> inletJapikseSolver(double Mguess, int maxIterations, double tolerance);
-    void calculateInletVelocities();
-    void printOutputFile();
-
     void calculateOutletCondition(std::string solverType, std::string slipModel);
+
+    // Japikse function
+    std::optional<double> inletJapikseSolver(double Mguess, int maxIterations, double tolerance);
     std::optional<double> outletJapikseSolver(int maxIterations, double tolerance, double rotorEfficiency);
     void calculateOutletVelocities();
 
+    // CCMD functions
+    std::optional<double> inletAungierSolver(int maxIterations, double tolerance);
+
+    // General/Loss model functions
+    void calculateInletVelocities();
     void calculateSlip(std::string slipModel);
+    void estimateAxialLength();
+
+    // Output functions
+    void printBorder(std::string solver, double& tolerance, int& maxIterations);
+    void printIteration(int& iteration, double& P, double& T, double& M, double& error, std::string varName);
+    void printOutputFile();
 };
 
 #endif  // IMPELLER_H
