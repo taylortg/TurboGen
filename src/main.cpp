@@ -1,13 +1,11 @@
-#include <cmath>
-#include <iostream>
 #include <thread>
 
-#include "../externals/CoolProp/include/CoolProp.h"
+// #include "../externals/CoolProp/include/CoolProp.h"
 #include "../externals/fmt/include/fmt/color.h"
 #include "../externals/fmt/include/fmt/core.h"
 #include "../include/common.h"
 #include "../include/impeller.h"
-#include "../include/plotter.h"
+// #include "../include/plotter.h"
 #include "../include/tgParser.h"
 #include "../include/thermo.h"
 
@@ -16,10 +14,11 @@ int main(int argc, char** argv) {
     std::cout << "DEBUG mode is active.\n";
 #endif
 
-    std::map<std::string, std::string> inputData = tgparser::readInputFile("../input.in");
+    //const std::map<std::string, std::string> inputData = tgparser::readInputFile("../input.in");
+    const std::map<std::string, std::string> inputData = tgparser::readInputFile("C:/Users/mastodon/Documents/TurboGen/input.in");
 
-    OperatingCondition op;
-    Geometry geom;
+    OperatingCondition op{};
+    Geometry geom{};
     ThermoProps thermo;
 
     std::thread opThread([&]() {
@@ -48,7 +47,7 @@ int main(int argc, char** argv) {
     fmt::print(fg(fmt::color::green), "All filtering completed.\n");
 
     Impeller impeller(thermo, geom, op);
-    impeller.calculateInletCondition("Japikse");
+    impeller.calculateInletCondition("Aungier");
     // impeller.calculateOutletCondition("Japikse", "Wiesner");
     // impeller.estimateAxialLength();
     // plotVelocityTriangle(impeller, true);

@@ -1,4 +1,7 @@
 build
+.vs
+.vscode
 externals/fmt
 utils/build-utils
 utils/CADfunctions/a.exe
+out/build

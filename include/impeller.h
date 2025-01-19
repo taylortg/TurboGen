@@ -24,8 +24,8 @@ class ImpellerState {
     Velocities rms;
     Velocities tip;
 
-    ImpellerState(const std::string& fluid_name = "AIR");
-    ImpellerState(const ThermoProps& thermo);
+    explicit ImpellerState(const std::string& fluid_name = "AIR");
+    explicit ImpellerState(const ThermoProps& thermo);
     ImpellerState(const ImpellerState& other);
     ImpellerState& operator=(const ImpellerState& other);
 };
@@ -38,8 +38,8 @@ class Impeller {
     Geometry geom;
     double pr_tt, isenEff, flowCoeff, workCoeff, Re_b2, Re_r2, dH0;
 
-    Impeller(ImpellerState& inlet, ImpellerState& outlet, const OperatingCondition& op, const Geometry& geom);
-    Impeller(ThermoProps thermo, const Geometry& geom, const OperatingCondition& op);
+    Impeller(const ImpellerState& inlet, const ImpellerState& outlet, const OperatingCondition& op, const Geometry& geom);
+    Impeller(const ThermoProps& thermo, const Geometry& geom, const OperatingCondition& op);
 
     // Driver functions
     void calculateInletCondition(std::string solverType);
@@ -59,8 +59,8 @@ class Impeller {
     void estimateAxialLength();
 
     // Output functions
-    void printBorder(std::string solver, double& tolerance, int& maxIterations);
-    void printIteration(int& iteration, double& P, double& T, double& M, double& error, std::string varName);
+    static void printBorder(std::string solver, double& tolerance, int& maxIterations);
+    static void printIteration(int& iteration, double& P, double& T, double& M, double& error, std::string varName);
     void printOutputFile();
 };
 

@@ -5,10 +5,9 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
-#include <iomanip>
 #include <optional>
-#include <sstream>
 #include <string>
+#include <utility>
 
 #include "../externals/fmt/include/fmt/color.h"
 #include "../externals/fmt/include/fmt/core.h"
@@ -47,11 +46,11 @@ ImpellerState& ImpellerState::operator=(const ImpellerState& other) {
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //          Impeller class
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Impeller::Impeller(ImpellerState& inlet, ImpellerState& outlet, const OperatingCondition& op, const Geometry& geom)
-    : inlet(inlet), outlet(outlet), op(op), geom(geom) {}
+Impeller::Impeller(const ImpellerState& inlet, const ImpellerState& outlet, const OperatingCondition& op, const Geometry& geom)
+    : inlet(inlet), outlet(outlet), op(op), geom(geom), pr_tt(0.0), isenEff(0.0), flowCoeff(0.0), workCoeff(0.0),Re_b2(0.0), Re_r2(0.0), dH0(0.0) {}
 
-Impeller::Impeller(ThermoProps thermo, const Geometry& geom, const OperatingCondition& op)
-    : inlet(thermo), outlet(thermo), op(op), geom(geom) {}
+Impeller::Impeller(const ThermoProps& thermo, const Geometry& geom, const OperatingCondition& op)
+    : inlet(thermo), outlet(thermo), op(op), geom(geom), pr_tt(0.0), isenEff(0.0), flowCoeff(0.0), workCoeff(0.0),Re_b2(0.0), Re_r2(0.0), dH0(0.0) {}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //          Driver function definitions
@@ -70,7 +69,7 @@ void Impeller::calculateInletCondition(std::string solverType) {
 }
 
 void Impeller::calculateOutletCondition(std::string solverType, std::string slipModel) {
-    calculateSlip(slipModel);
+    calculateSlip(std::move(slipModel));
     if (solverType == "Japikse") {
         outletJapikseSolver(1000, 1e-8, 0.92);
     } else {
@@ -86,7 +85,7 @@ void Impeller::calculateOutletCondition(std::string solverType, std::string slip
 std::optional<double> Impeller::inletJapikseSolver(double Mguess = 0.3, int maxIterations = 1000,
                                                    double tolerance = 1e-6) {
     int iteration = 1;
-    double error = 1.0;
+    double error;
 
     printBorder("Japikse", tolerance, maxIterations);
 
@@ -147,7 +146,7 @@ std::optional<double> Impeller::inletJapikseSolver(double Mguess = 0.3, int maxI
 std::optional<double> Impeller::outletJapikseSolver(int maxIterations = 1000, double tolerance = 1e-6,
                                                     double rotorEfficiency = 0.92) {
     int iteration = 1;
-    double error = 1.0;
+    double error;
     std::array<Velocities, 3> velArr = {outlet.hub, outlet.rms, outlet.tip};
     std::array<double, 3> dh0 = {};
     double Rgas = 0.0;
@@ -169,7 +168,7 @@ std::optional<double> Impeller::outletJapikseSolver(int maxIterations = 1000, do
                                  outlet.total.props.T);  // do this only for the initial guess at Mach number
     }
 
-    const double initialMachGuess = 0.6;
+    constexpr double initialMachGuess = 0.6;
     double M2guess = initialMachGuess;
     do {
         outlet.static_.props.T = outlet.total.props.T / (1. + (outlet.static_.props.Y - 1.) / 2. * pow(M2guess, 2));
@@ -193,12 +192,8 @@ std::optional<double> Impeller::outletJapikseSolver(int maxIterations = 1000, do
                            outlet.static_.props.P, geom.area2);
                 return std::nullopt;
             }
-            try {
-                velArr[i].C_m = (op.mfr * Rgas * outlet.static_.props.T) / (outlet.static_.props.P * geom.area2);
-            } catch (const std::exception& e) {
-                fmt::print(fg(fmt::color::red), "Error in C_m calculation: {}\n", e.what());
-                return std::nullopt;
-            }
+
+            velArr[i].C_m = (op.mfr * Rgas * outlet.static_.props.T) / (outlet.static_.props.P * geom.area2);
             velArr[i].C = sqrt(pow(velArr[i].C_m, 2.) + pow(velArr[i].C_theta, 2.));
             velArr[i].M = velArr[i].C / outlet.static_.props.A;
             if (geom.beta2 == 0) {
@@ -246,14 +241,14 @@ std::optional<double> Impeller::outletJapikseSolver(int maxIterations = 1000, do
 void Impeller::calculateOutletVelocities() {
     std::array<Velocities, 3> vel = {outlet.hub, outlet.rms, outlet.tip};
 
-    for (int i = 0; i < vel.size(); i++) {
-        vel[i].W_theta = vel[i].U - vel[i].C_theta;
-        vel[i].W_m = vel[i].C_m;
-        vel[i].W = sqrt(pow(vel[i].W_theta, 2.) + pow(vel[i].W_m, 2.));
-        vel[i].beta = -atan(vel[i].W_theta / vel[i].W_m);
-        vel[i].M_rel = vel[i].W / outlet.static_.props.A;
-        vel[i].C_slip = vel[i].U - vel[i].C_theta;
-        vel[i].alpha = atan(vel[i].C_theta / vel[i].C_m);
+    for (auto & i : vel) {
+        i.W_theta = i.U - i.C_theta;
+        i.W_m = i.C_m;
+        i.W = sqrt(pow(i.W_theta, 2.) + pow(i.W_m, 2.));
+        i.beta = -atan(i.W_theta / i.W_m);
+        i.M_rel = i.W / outlet.static_.props.A;
+        i.C_slip = i.U - i.C_theta;
+        i.alpha = atan(i.C_theta / i.C_m);
     }
 
     outlet.hub = vel[0];
@@ -266,7 +261,7 @@ void Impeller::calculateOutletVelocities() {
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 std::optional<double> Impeller::inletAungierSolver(int maxIterations, double tolerance) {
     int iteration = 1;
-    double error = 1.0;
+    double error;
 
     printBorder("Aungier", tolerance, maxIterations);
 
@@ -400,7 +395,7 @@ void Impeller::printIteration(int& iteration, double& P, double& T, double& M, d
 
 void Impeller::printOutputFile() {
     namespace fs = std::filesystem;
-    fs::path dirPath = "./../out";
+    const fs::path dirPath = "./../out";
 
     try {
         if (!fs::exists(dirPath)) {
