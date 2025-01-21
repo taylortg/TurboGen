@@ -70,5 +70,47 @@ void ThermoProps::set_props(std::string const& input_pair_, double const& val1, 
         props.CP = state->keyed_output(CoolProp::iCpmass);
         props.CV = state->keyed_output(CoolProp::iCvmass);
         props.Y = props.CP / props.CV;
+    } else if (input_pair_ == "PS") {
+        props.P = val1;
+        props.S = val2;
+        try {
+            if (!state) {
+                fmt::print(fg(fmt::color::red), "CoolProp state is not initialized properly.\n");
+                return;
+            }
+            state->update(CoolProp::PSmass_INPUTS, val1, val2);
+        } catch (const std::exception& e) {
+            fmt::print(fg(fmt::color::red), "CoolProp error: {}\n", e.what());
+            return;
+        }
+        props.D = state->keyed_output(CoolProp::iDmass);
+        props.T = state->keyed_output(CoolProp::iT);
+        props.H = state->keyed_output(CoolProp::iHmass);
+        props.V = state->keyed_output(CoolProp::iviscosity);
+        props.A = state->keyed_output(CoolProp::ispeed_sound);
+        props.CP = state->keyed_output(CoolProp::iCpmass);
+        props.CV = state->keyed_output(CoolProp::iCvmass);
+        props.Y = props.CP / props.CV;
+    } else if (input_pair_ == "HP") {
+        props.P = val2;
+        props.H = val1;
+        try {
+            if (!state) {
+                fmt::print(fg(fmt::color::red), "CoolProp state is not initialized properly.\n");
+                return;
+            }
+            state->update(CoolProp::HmassP_INPUTS, val1, val2);
+        } catch (const std::exception& e) {
+            fmt::print(fg(fmt::color::red), "CoolProp error: {}\n", e.what());
+            return;
+        }
+        props.D = state->keyed_output(CoolProp::iDmass);
+        props.T = state->keyed_output(CoolProp::iT);
+        props.S = state->keyed_output(CoolProp::iSmass);
+        props.V = state->keyed_output(CoolProp::iviscosity);
+        props.A = state->keyed_output(CoolProp::ispeed_sound);
+        props.CP = state->keyed_output(CoolProp::iCpmass);
+        props.CV = state->keyed_output(CoolProp::iCvmass);
+        props.Y = props.CP / props.CV;
     }
 }

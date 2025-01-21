@@ -6,7 +6,10 @@
 #include "common.h"
 #include "thermo.h"
 
+enum ImpellerStation { INLET, OUTLET };
+
 struct ImpellerLosses {
+    double impeller = 0.0;
     double skinFriction = 0.0;
     double bladeLoading = 0.0;
     double clearance = 0.0;
@@ -38,7 +41,8 @@ class Impeller {
     Geometry geom;
     double pr_tt, isenEff, flowCoeff, workCoeff, Re_b2, Re_r2, dH0;
 
-    Impeller(const ImpellerState& inlet, const ImpellerState& outlet, const OperatingCondition& op, const Geometry& geom);
+    Impeller(const ImpellerState& inlet, const ImpellerState& outlet, const OperatingCondition& op,
+             const Geometry& geom);
     Impeller(const ThermoProps& thermo, const Geometry& geom, const OperatingCondition& op);
 
     // Driver functions
@@ -52,14 +56,18 @@ class Impeller {
 
     // CCMD functions
     std::optional<double> inletAungierSolver(int maxIterations, double tolerance);
+    std::optional<double> outletAungierSolver(int maxIterations, double tolerance, double rotorEfficiency);
+    bool aungierVelocityLoop(int maxIterations, double tolerance);
 
     // General/Loss model functions
     void calculateInletVelocities();
     void calculateSlip(std::string slipModel);
     void estimateAxialLength();
+    ImpellerLosses internalLosses();
+    double skinFrictionCoefficient(double Re, double dH, double E, double tol);
 
     // Output functions
-    static void printBorder(std::string solver, double& tolerance, int& maxIterations);
+    static void printBorder(std::string solver, double& tolerance, int& maxIterations, ImpellerStation station);
     static void printIteration(int& iteration, double& P, double& T, double& M, double& error, std::string varName);
     void printOutputFile();
 };

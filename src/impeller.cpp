@@ -46,11 +46,32 @@ ImpellerState& ImpellerState::operator=(const ImpellerState& other) {
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //          Impeller class
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Impeller::Impeller(const ImpellerState& inlet, const ImpellerState& outlet, const OperatingCondition& op, const Geometry& geom)
-    : inlet(inlet), outlet(outlet), op(op), geom(geom), pr_tt(0.0), isenEff(0.0), flowCoeff(0.0), workCoeff(0.0),Re_b2(0.0), Re_r2(0.0), dH0(0.0) {}
+Impeller::Impeller(const ImpellerState& inlet, const ImpellerState& outlet, const OperatingCondition& op,
+                   const Geometry& geom)
+    : inlet(inlet),
+      outlet(outlet),
+      op(op),
+      geom(geom),
+      pr_tt(0.0),
+      isenEff(0.0),
+      flowCoeff(0.0),
+      workCoeff(0.0),
+      Re_b2(0.0),
+      Re_r2(0.0),
+      dH0(0.0) {}
 
 Impeller::Impeller(const ThermoProps& thermo, const Geometry& geom, const OperatingCondition& op)
-    : inlet(thermo), outlet(thermo), op(op), geom(geom), pr_tt(0.0), isenEff(0.0), flowCoeff(0.0), workCoeff(0.0),Re_b2(0.0), Re_r2(0.0), dH0(0.0) {}
+    : inlet(thermo),
+      outlet(thermo),
+      op(op),
+      geom(geom),
+      pr_tt(0.0),
+      isenEff(0.0),
+      flowCoeff(0.0),
+      workCoeff(0.0),
+      Re_b2(0.0),
+      Re_r2(0.0),
+      dH0(0.0) {}
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //          Driver function definitions
@@ -72,6 +93,8 @@ void Impeller::calculateOutletCondition(std::string solverType, std::string slip
     calculateSlip(std::move(slipModel));
     if (solverType == "Japikse") {
         outletJapikseSolver(1000, 1e-8, 0.92);
+    } else if (solverType == "Aungier") {
+        outletAungierSolver(1000, 1e-8, 0.9);
     } else {
         fmt::print(fg(fmt::color::red), "Solver type not implemented. Solver type passed: {}\n", solverType);
         exit(EXIT_FAILURE);
@@ -87,7 +110,7 @@ std::optional<double> Impeller::inletJapikseSolver(double Mguess = 0.3, int maxI
     int iteration = 1;
     double error;
 
-    printBorder("Japikse", tolerance, maxIterations);
+    printBorder("Japikse", tolerance, maxIterations, INLET);
 
 // This is only here to indicate if there are issues with the solver. The
 // execution time of the while loop should be incredibly small. If you see it is
@@ -110,8 +133,8 @@ std::optional<double> Impeller::inletJapikseSolver(double Mguess = 0.3, int maxI
             return std::nullopt;
         }
         double Rgas = inlet.static_.props.CP - inlet.static_.props.CV;
-        inlet.tip.C_m = (op.mfr * Rgas * inlet.static_.props.T) / (inlet.static_.props.P * geom.area1);
-        inlet.tip.M = inlet.tip.C_m / inlet.static_.props.A;
+        inlet.tip.C = (op.mfr * Rgas * inlet.static_.props.T) / (inlet.static_.props.P * geom.area1);
+        inlet.tip.M = inlet.tip.C / inlet.static_.props.A;
         error = std::abs((Mguess - inlet.tip.M) / Mguess);
         Mguess = inlet.tip.M;
 
@@ -127,8 +150,8 @@ std::optional<double> Impeller::inletJapikseSolver(double Mguess = 0.3, int maxI
 #endif
 
     fmt::print("{:=<90}\n", "");
-    inlet.rms.C_m = inlet.tip.C_m;
-    inlet.hub.C_m = inlet.tip.C_m;
+    inlet.rms.C = inlet.tip.C;
+    inlet.hub.C = inlet.tip.C;
     inlet.rms.M = inlet.tip.M;
     inlet.hub.M = inlet.tip.M;
 
@@ -153,7 +176,7 @@ std::optional<double> Impeller::outletJapikseSolver(int maxIterations = 1000, do
     outlet.total = inlet.total;
     outlet.static_ = inlet.static_;
 
-    printBorder("Japikse", tolerance, maxIterations);
+    printBorder("Japikse", tolerance, maxIterations, OUTLET);
 
     for (int i = 0; i < velArr.size(); ++i) {
         velArr[i].U = op.omega * (geom.r2 * MM_M);
@@ -163,10 +186,11 @@ std::optional<double> Impeller::outletJapikseSolver(int maxIterations = 1000, do
         outlet.total.props.P = inlet.total.props.P *
                                pow(1.0 + ((rotorEfficiency * dh0[i]) / (outlet.total.props.CP * inlet.total.props.T)),
                                    outlet.total.props.Y / (outlet.total.props.Y - 1.0));
-        outlet.total.set_props("PT", outlet.total.props.P, outlet.total.props.T);
-        outlet.static_.set_props("PT", outlet.total.props.P,
-                                 outlet.total.props.T);  // do this only for the initial guess at Mach number
     }
+
+    outlet.total.set_props("PT", outlet.total.props.P, outlet.total.props.T);
+    outlet.static_.set_props("PT", outlet.total.props.P,
+                             outlet.total.props.T);  // do this only for the initial guess at Mach number
 
     constexpr double initialMachGuess = 0.6;
     double M2guess = initialMachGuess;
@@ -238,24 +262,6 @@ std::optional<double> Impeller::outletJapikseSolver(int maxIterations = 1000, do
     }
 }
 
-void Impeller::calculateOutletVelocities() {
-    std::array<Velocities, 3> vel = {outlet.hub, outlet.rms, outlet.tip};
-
-    for (auto & i : vel) {
-        i.W_theta = i.U - i.C_theta;
-        i.W_m = i.C_m;
-        i.W = sqrt(pow(i.W_theta, 2.) + pow(i.W_m, 2.));
-        i.beta = -atan(i.W_theta / i.W_m);
-        i.M_rel = i.W / outlet.static_.props.A;
-        i.C_slip = i.U - i.C_theta;
-        i.alpha = atan(i.C_theta / i.C_m);
-    }
-
-    outlet.hub = vel[0];
-    outlet.rms = vel[1];
-    outlet.tip = vel[2];
-}
-
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //          CCMD functions
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -263,7 +269,7 @@ std::optional<double> Impeller::inletAungierSolver(int maxIterations, double tol
     int iteration = 1;
     double error;
 
-    printBorder("Aungier", tolerance, maxIterations);
+    printBorder("Aungier", tolerance, maxIterations, INLET);
 
 #ifdef DEBUG
     auto start = std::chrono::high_resolution_clock::now();
@@ -273,10 +279,10 @@ std::optional<double> Impeller::inletAungierSolver(int maxIterations, double tol
     double area = geom.area1;
     double rhoOld = inlet.static_.props.D;
     do {
-        inlet.tip.C_m = op.mfr / (inlet.static_.props.D * area * std::cos(op.alpha * DEG_RAD));
-        inlet.tip.M = inlet.tip.C_m / inlet.static_.props.A;
+        inlet.tip.C = op.mfr / (inlet.static_.props.D * area * std::cos(op.alpha * DEG_RAD));
+        inlet.tip.M = inlet.tip.C / inlet.static_.props.A;
         inlet.static_.props.T = inlet.total.props.T / (1. + (inlet.static_.props.Y - 1.) / 2. * pow(inlet.tip.M, 2));
-        inlet.static_.props.H = inlet.total.props.H - std::pow(inlet.tip.C_m, 2.0) / 2.0;
+        inlet.static_.props.H = inlet.total.props.H - std::pow(inlet.tip.C, 2.0) / 2.0;
         try {
             inlet.static_.set_props("HS", inlet.static_.props.H, inlet.static_.props.S);
         } catch (const std::runtime_error& e) {
@@ -303,8 +309,8 @@ std::optional<double> Impeller::inletAungierSolver(int maxIterations, double tol
 
     fmt::print("{:=<90}\n", "");
 
-    inlet.rms.C_m = inlet.tip.C_m;
-    inlet.hub.C_m = inlet.tip.C_m;
+    inlet.rms.C = inlet.tip.C;
+    inlet.hub.C = inlet.tip.C;
     inlet.rms.M = inlet.tip.M;
     inlet.hub.M = inlet.tip.M;
 
@@ -317,6 +323,133 @@ std::optional<double> Impeller::inletAungierSolver(int maxIterations, double tol
         fmt::print(fg(fmt::color::red), "Solution did not converge, results could be inaccurate!\n");
         return std::nullopt;
     }
+}
+
+std::optional<double> Impeller::outletAungierSolver(int maxIterations, double tolerance, double rotorEfficiency) {
+    int pressIteration = 1;
+    int effIteration = 1;
+    int velIteration = 1;
+    double pressError;
+    double effError;
+    double velError;
+
+    printBorder("Aungier", tolerance, maxIterations, OUTLET);
+
+#ifdef DEBUG
+    auto start = std::chrono::high_resolution_clock::now();
+#endif
+    estimateAxialLength();
+    constexpr double PRguess = 2.0;
+    double area = geom.area2;
+    outlet.hub.U = op.omega * (geom.r2 * MM_M);
+    outlet.rms.U = op.omega * (geom.r2 * MM_M);
+    outlet.tip.U = op.omega * (geom.r2 * MM_M);
+    do {
+        // reset efficiency loop
+        effIteration = 1;
+        effError = 1.0;
+        while (effIteration <= maxIterations && effError > tolerance) {
+            double effOld = rotorEfficiency;
+            outlet.total.props.P = PRguess * inlet.total.props.P;
+            try {
+                outlet.isentropic.set_props("PS", outlet.total.props.P, inlet.total.props.S);
+            } catch (const std::runtime_error& e) {
+                fmt::print(fg(fmt::color::red), "Runtime error: {}\n", e.what());
+                return std::nullopt;
+            } catch (const std::exception& e) {
+                fmt::print(fg(fmt::color::red), "Error: {}\n", e.what());
+                return std::nullopt;
+            }
+            outlet.total.props.H =
+                inlet.total.props.H + (outlet.isentropic.props.H - inlet.total.props.H) / rotorEfficiency;
+
+            try {
+                outlet.total.set_props("HP", outlet.total.props.H, outlet.total.props.P);
+            } catch (const std::runtime_error& e) {
+                fmt::print(fg(fmt::color::red), "Runtime error: {}\n", e.what());
+                return std::nullopt;
+            } catch (const std::exception& e) {
+                fmt::print(fg(fmt::color::red), "Error: {}\n", e.what());
+                return std::nullopt;
+            }
+
+            dH0 = outlet.total.props.H - inlet.total.props.H;
+            outlet.rms.C_theta = (1.0 / outlet.rms.U) * (dH0 + inlet.rms.U * inlet.rms.C_theta);
+
+            // reset velocity loop
+            outlet.rms.C_m = op.mfr / (outlet.total.props.D * area);
+            if (!aungierVelocityLoop(maxIterations, tolerance)) {
+                return std::nullopt;
+            }
+
+            // Get outlet velocities
+            outlet.hub.C_m = outlet.rms.C_m;
+            outlet.tip.C_m = outlet.rms.C_m;
+            outlet.hub.C_theta = outlet.rms.C_theta;
+            outlet.tip.C_theta = outlet.rms.C_theta;
+            outlet.hub.C = outlet.rms.C;
+            outlet.tip.C = outlet.rms.C;
+            outlet.hub.M = outlet.rms.M;
+            outlet.tip.M = outlet.rms.M;
+            calculateOutletVelocities();
+
+            ImpellerLosses losses = internalLosses();
+            double H02real = outlet.isentropic.props.H + 5000.0;
+            fmt::println("outlet.isentropic.props.H: {}", outlet.isentropic.props.H);
+            fmt::println("H02real: {}", H02real);
+            rotorEfficiency = (outlet.isentropic.props.H - inlet.total.props.H) / (H02real - inlet.total.props.H);
+            effError = std::abs((rotorEfficiency - effOld) / effOld);
+
+            printIteration(effIteration, outlet.static_.props.P, outlet.static_.props.T, rotorEfficiency, effError,
+                           "Efficiency");
+
+            effIteration++;
+        }
+
+        pressError = 1.0;
+        pressIteration++;
+    } while (pressIteration <= 1 && pressError > tolerance);
+
+#ifdef DEBUG
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Solver execution time: " << std::setw(10) << std::fixed << std::setprecision(6)
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms\n";
+#endif
+
+    return std::nullopt;
+}
+
+// This is the velocity while loop to converge on static density
+bool Impeller::aungierVelocityLoop(int maxIterations, double tolerance) {
+    int velIteration = 1;
+    double velError = 1.0;
+    double rhoOld = outlet.total.props.D;
+
+    while (velIteration <= maxIterations && velError > tolerance) {
+        outlet.rms.C = std::sqrt(std::pow(outlet.rms.C_m, 2) + std::pow(outlet.rms.C_theta, 2));
+        outlet.static_.props.H = outlet.total.props.H - std::pow(outlet.rms.C, 2) / 2.0;
+
+        try {
+            outlet.static_.set_props("HS", outlet.static_.props.H, outlet.total.props.S);
+        } catch (const std::exception& e) {
+            fmt::print(fg(fmt::color::red), "Error: {}\n", e.what());
+            return false;
+        }
+
+        outlet.rms.C_m = op.mfr / (outlet.static_.props.D * geom.area2);
+        velError = std::abs((outlet.static_.props.D - rhoOld) / rhoOld);
+
+        rhoOld = outlet.static_.props.D;
+        outlet.rms.M = outlet.rms.C / outlet.static_.props.A;
+
+        velIteration++;
+    }
+
+    if (velIteration < maxIterations) {
+        fmt::print(fg(fmt::color::green), "Inner velocity loop converged with error {:.4e}\n", velError);
+    }
+
+    return true;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -332,14 +465,14 @@ void Impeller::calculateInletVelocities() {
         velArr[i].alpha = op.alpha;
         velArr[i].U = (radius[i]) * op.omega;
         if (velArr[i].alpha == 0) {
-            velArr[i].C = velArr[i].C_m;
+            velArr[i].C_m = velArr[i].C;
             velArr[i].C_theta = 0.0;
             velArr[i].W = sqrt(pow(velArr[i].C, 2.) + pow(velArr[i].U, 2.));
             velArr[i].W_m = velArr[i].C_m;
             velArr[i].W_theta = velArr[i].U;
             velArr[i].beta = -std::atan(velArr[i].U / velArr[i].C);
         } else {
-            velArr[i].C = velArr[i].C_m / std::cos(velArr[i].alpha);
+            velArr[i].C_m = velArr[i].C * std::cos(velArr[i].alpha);
             velArr[i].C_theta = velArr[i].C * std::sin(velArr[i].alpha);
             velArr[i].W_m = velArr[i].C_m;
             velArr[i].W_theta = velArr[i].U = velArr[i].C_theta;
@@ -355,9 +488,27 @@ void Impeller::calculateInletVelocities() {
     inlet.tip = velArr[2];
 }
 
+void Impeller::calculateOutletVelocities() {
+    std::array<Velocities, 3> vel = {outlet.hub, outlet.rms, outlet.tip};
+
+    for (auto& i : vel) {
+        i.W_theta = i.U - i.C_theta;
+        i.W_m = i.C_m;
+        i.W = sqrt(pow(i.W_theta, 2.) + pow(i.W_m, 2.));
+        i.beta = -atan(i.W_theta / i.W_m);
+        i.M_rel = i.W / outlet.static_.props.A;
+        i.C_slip = i.U - i.C_theta;
+        i.alpha = atan(i.C_theta / i.C_m);
+    }
+
+    outlet.hub = vel[0];
+    outlet.rms = vel[1];
+    outlet.tip = vel[2];
+}
+
 void Impeller::calculateSlip(std::string slipModel) {
     if (slipModel == "Wiesner") {
-        double sigma = 1.0 - sqrt(cos(geom.beta2 * DEG_RAD)) / pow(geom.Z, 0.7);
+        double sigma = 1.0 - sqrt(cos(geom.beta2 * DEG_RAD)) / pow(geom.ZFull, 0.7);
         outlet.hub.sigma = sigma;
         outlet.rms.sigma = sigma;
         outlet.tip.sigma = sigma;
@@ -370,22 +521,142 @@ void Impeller::calculateSlip(std::string slipModel) {
 void Impeller::estimateAxialLength() {
     // Aungier 2000 pg.113
     flowCoeff = op.mfr / (inlet.total.props.D * PI * std::pow((geom.r2 * MM_M), 2) * outlet.tip.U);
-    geom.axialLength = (0.014 + 0.023 * (geom.r2 / geom.r1h) + 1.58 * flowCoeff) / MM_M;
+    geom.deltaZ = (0.014 + 0.023 * (geom.r2 / geom.r1h) + 1.58 * flowCoeff);
+}
 
-    double estWorkCoeff = 0.62 - std::pow(flowCoeff / 0.4, 3) + 0.0014 / workCoeff;
-    fmt::print("Est. mu: {:.4f}\n", estWorkCoeff);
+ImpellerLosses Impeller::internalLosses() {
+    ImpellerLosses losses = {};
+    double cf = 0.0;
+    double lambda = 0.0;
+    double bb2 = 0.0;
+
+    // Skin friction loss
+    double passageA1 = geom.area1 * (std::abs(1.0 + std::cos(geom.beta1rms * DEG_RAD)) / 2.0) / float(geom.ZFull);
+    double tb1 = 2.11;
+    double tb = 2.11;
+    double throatArea = passageA1 - (tb1 * MM_M * (geom.r1t * MM_M - geom.r1h * MM_M));
+    double tipArea = 0.0;
+    double tipPerimeter = 0.0;
+
+    if (geom.ZSplit > 0) {
+        tipArea = std::abs(geom.b2 * (2 * PI * (geom.r2 * MM_M) / geom.ZFull - (geom.ZFull + geom.ZSplit) * tb) *
+                           std::cos(outlet.rms.beta * DEG_RAD));
+        tipPerimeter = 4 * (geom.b2 + 2 * PI * (geom.r2 * MM_M) / (geom.ZFull + geom.ZSplit));
+    } else {
+        tipArea = std::abs(geom.b2 * (2 * PI * (geom.r2 * MM_M) / geom.ZFull - (geom.ZFull) * tb) *
+                           std::cos(outlet.rms.beta * DEG_RAD));
+        tipPerimeter = 2 * (geom.b2 + 2 * PI * (geom.r2 * MM_M) / (geom.ZFull));
+    }
+
+    double throatPerimeter =
+        2 * ((geom.r1t * MM_M) - (geom.r1h * MM_M) + PI * (geom.r1t * MM_M) + (geom.r1h * MM_M) / geom.ZFull);
+    losses.impeller = 2 * (throatArea / throatPerimeter + tipArea / tipPerimeter);
+    fmt::print("losses.impeller: {:.4f}\n", losses.impeller);
+    double WBar = (inlet.rms.C * ((geom.r1t * MM_M) / (geom.r1rms * MM_M)) + outlet.rms.C + inlet.tip.W +
+                   2.0 * inlet.hub.W + 3.0 * outlet.rms.W) /
+                  8.0;
+    double visc = (inlet.static_.props.V + outlet.static_.props.V) / 2.0;
+    double ReImpeller = (inlet.static_.props.D + outlet.static_.props.V) / 2.0 * WBar * losses.impeller / visc;
+
+    cf = skinFrictionCoefficient(ReImpeller, losses.impeller, 0.0000050, 1e-8);
+
+    estimateAxialLength();
+    geom.lb = (geom.deltaZ - (geom.b2 * MM_M) / 2.0) +
+              ((2 * geom.r2 * MM_M) - (2 * geom.r1rms * MM_M)) / (2.0 * std::cos(geom.beta2 * DEG_RAD));
+
+    losses.skinFriction = 2.0 * cf * geom.lb / losses.impeller * std::pow(WBar, 2);
+    fmt::print("losses.skinFriction: {:.4f}\n", losses.skinFriction);
+
+    // Blade work input loss
+    double AR = tipArea / throatArea;
+    double phi2 = op.mfr / (outlet.static_.props.D * geom.area2 * outlet.rms.U);
+
+    if (std::abs((outlet.total.props.P / outlet.static_.props.P) / outlet.total.props.P) > 1e-3) {
+        // Tip blockage (Aungier, 2000)
+        bb2 = losses.skinFriction * (inlet.total.props.P - inlet.static_.props.P) /
+                  (outlet.total.props.P - outlet.static_.props.P) *
+                  std::sqrt(std::abs(inlet.rms.W * losses.impeller / (outlet.rms.W * (geom.b2 * MM_M)))) +
+              (0.3 + std::pow((geom.b2 * MM_M) / geom.lb, 2)) * std::pow(AR, 2) * outlet.static_.props.D *
+                  (geom.b2 * MM_M) / (inlet.static_.props.D * geom.lb) +
+              0.000372 / (2 * (geom.b2 * MM_M));
+        fmt::print("bb2: {:.4f}\n", bb2);
+        lambda = (1.0 / (1.0 - bb2));
+        fmt::print("lambda: {:.4f}\n", lambda);
+        losses.bladeLoading = outlet.rms.sigma * (1.0 + lambda * phi2 * std::tan(geom.beta2 * DEG_RAD)) -
+                              inlet.rms.U * inlet.rms.C_theta / std::pow(outlet.rms.U, 2);
+        fmt::print("losses.bladeLoading: {:.4f}\n", losses.bladeLoading);
+    } else {
+        losses.bladeLoading =
+            (outlet.rms.U * outlet.rms.C_theta - inlet.rms.U * inlet.rms.C_theta) / std::pow(outlet.rms.U, 2);
+        fmt::print("losses.bladeLoading: {:.4f}\n", losses.bladeLoading);
+    }
+
+    return losses;
+}
+
+double Impeller::skinFrictionCoefficient(double Re, double dH, double E, double tol) {
+    double cf, cfl, cft, error;
+    int iteration = 1;
+    // Laminar flow if (actually <2000 but incase transitional)
+    if (Re < 4000) {
+        cf = 16.0 / Re;
+    } else {
+        double X = 1.0;
+        double last = 0.0;
+        // Turbulent flow over a smooth surfuace given by (Aungier, 2000)
+        do {
+            last = X;
+            X = -2.0 * std::log10(2.51 * X / Re);
+            error = std::abs((last - X) / X);
+            iteration++;
+            fmt::println("Iteration {}", iteration);
+            fmt::println("X {:.4f}\tError: {:.4e}", X, error);
+        } while (error > tol && iteration <= 100);
+        double cfts = 0.25 * std::pow(X, -2);
+        // Turbulent flow over a fully rough surface given by (Aungier, 2000)
+        X = -2.0 * std::log10(E / (3.71 * dH));
+        double cftr = 0.25 * std::pow(X, -2);
+        // Surface roughness becomes significant when Re_e < 60
+        double Re_e = (Re - 2000.0) * E / dH;
+        if (Re_e < 60) {
+            cft = cfts;
+        } else {
+            cft = cfts + (cftr - cfts) * (1.0 - 60 / Re_e);
+        }
+    }
+
+    // If transitional from laminar to turbulent, set cf to a weighted average of the two given by (Aungier, 2000)
+    if (Re < 4000 && Re > 2000) {
+        cfl = 16.0 / Re;
+        cf = cfl + (cft - cfl) * (Re / 2000.0 - 1.0);
+    } else {
+        cf = cft;
+    }
+
+    return cf;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //          Output functions
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-void Impeller::printBorder(std::string solver, double& tolerance, int& maxIterations) {
+void Impeller::printBorder(std::string solver, double& tolerance, int& maxIterations, ImpellerStation station) {
     std::string border = fmt::format("{:=<90}\n", "");
-    fmt::print(
-        "{}Entered impeller inlet solver loop!\nSolver: {}\nConvergence tolerance: {:.2e}\nMaximum iterations: "
-        "{}\n{}",
-        border, solver, tolerance, maxIterations, border);
+    switch (station) {
+    case INLET:
+        fmt::print(
+            "{}Entered impeller inlet solver loop!\nSolver: {}\nConvergence tolerance: {:.2e}\nMaximum iterations: "
+            "{}\n{}",
+            border, solver, tolerance, maxIterations, border);
+        break;
+
+    case OUTLET:
+        fmt::print(
+            "{}Entered impeller outlet solver loop!\nSolver: {}\nConvergence tolerance: {:.2e}\nMaximum iterations: "
+            "{}\n{}",
+            border, solver, tolerance, maxIterations, border);
+        break;
+    }
 }
 
 void Impeller::printIteration(int& iteration, double& P, double& T, double& M, double& error, std::string varName) {

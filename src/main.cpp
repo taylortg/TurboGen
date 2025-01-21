@@ -5,7 +5,7 @@
 #include "../externals/fmt/include/fmt/core.h"
 #include "../include/common.h"
 #include "../include/impeller.h"
-// #include "../include/plotter.h"
+#include "../include/plotter.h"
 #include "../include/tgParser.h"
 #include "../include/thermo.h"
 
@@ -14,8 +14,9 @@ int main(int argc, char** argv) {
     std::cout << "DEBUG mode is active.\n";
 #endif
 
-    //const std::map<std::string, std::string> inputData = tgparser::readInputFile("../input.in");
-    const std::map<std::string, std::string> inputData = tgparser::readInputFile("C:/Users/mastodon/Documents/TurboGen/input.in");
+    // const std::map<std::string, std::string> inputData = tgparser::readInputFile("../input.in");
+    const std::map<std::string, std::string> inputData =
+        tgparser::readInputFile("C:/Users/mastodon/Documents/TurboGen/input.in");
 
     OperatingCondition op{};
     Geometry geom{};
@@ -49,6 +50,7 @@ int main(int argc, char** argv) {
     Impeller impeller(thermo, geom, op);
     impeller.calculateInletCondition("Aungier");
     // impeller.calculateOutletCondition("Japikse", "Wiesner");
+    impeller.calculateOutletCondition("Aungier", "Wiesner");
     // impeller.estimateAxialLength();
     // plotVelocityTriangle(impeller, true);
 

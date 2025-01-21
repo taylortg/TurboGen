@@ -69,8 +69,10 @@ Geometry filterFileContent_geom(const std::map<std::string, std::string>& fileCo
     setPropertyFromFileContent(fileContent, key, geom.blockage1);
     key = keyToString(FileKey::BLOCKAGE2);
     setPropertyFromFileContent(fileContent, key, geom.blockage2);
-    key = keyToString(FileKey::NUM_BLADES);
-    setPropertyFromFileContent(fileContent, key, geom.Z);
+    key = keyToString(FileKey::NUM_FULL_BLADES);
+    setPropertyFromFileContent(fileContent, key, geom.ZFull);
+    key = keyToString(FileKey::NUM_SPLITTER_BLADES);
+    setPropertyFromFileContent(fileContent, key, geom.ZSplit);
     key = keyToString(FileKey::AXIAL_LENGTH_RATIO);
     setPropertyFromFileContent(fileContent, key, geom.axialLengthRatio);
 

@@ -135,10 +135,11 @@ void plotVelocityTriangle(const Impeller& impeller, bool htmlFlag) {
                 file << formatTableRow("Inlet throat area", "mm^2", impeller.geom.throatArea * 1000000.0, 0);
                 file << formatTableRow("Outlet area", "mm^2", impeller.geom.area2 * 1000000.0, 0);
                 file << formatTableRow("Axial length - OD ratio", "", impeller.geom.axialLengthRatio, 4);
-                file << formatTableRow("Axial length", "mm", impeller.geom.axialLength, 4);
+                // file << formatTableRow("Axial length", "mm", impeller.geom.axialLength, 4);
                 file << formatTableRow("Inlet blockage factor", "", impeller.geom.blockage1, 4);
                 file << formatTableRow("Outlet blockage factor", "", impeller.geom.blockage2, 4);
-                file << formatTableRow("Number of blades", "", impeller.geom.Z, 0);
+                file << formatTableRow("Number of full blades", "", impeller.geom.ZFull, 0);
+                file << formatTableRow("Number of splitter blades", "", impeller.geom.ZSplit, 0);
                 file << fmt::format("\t\t</table>\n");
 
                 file << fmt::format("\t\t<table>\n");

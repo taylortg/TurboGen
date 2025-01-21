@@ -31,14 +31,15 @@ enum class FileKey {
     BETA2,
     BLOCKAGE1,
     BLOCKAGE2,
-    NUM_BLADES,
+    NUM_FULL_BLADES,
+    NUM_SPLITTER_BLADES,
     AXIAL_LENGTH_RATIO,  // Geometry
     FLUID,
     PRESSURE,
     TEMPERATURE
 };
 
-constexpr std::array<std::pair<FileKey, const char*>, 17> fileKeyStrings = {
+constexpr std::array<std::pair<FileKey, const char*>, 18> fileKeyStrings = {
     {{FileKey::SPEED, "SPEED"},
      {FileKey::MASS_FLOW, "MASS_FLOW"},
      {FileKey::INLET_FLOW_ANGLE, "INLET_FLOW_ANGLE"},
@@ -51,7 +52,8 @@ constexpr std::array<std::pair<FileKey, const char*>, 17> fileKeyStrings = {
      {FileKey::BETA2, "BETA2"},
      {FileKey::BLOCKAGE1, "BLOCKAGE1"},
      {FileKey::BLOCKAGE2, "BLOCKAGE2"},
-     {FileKey::NUM_BLADES, "NUM_BLADES"},
+     {FileKey::NUM_FULL_BLADES, "NUM_FULL_BLADES"},
+     {FileKey::NUM_SPLITTER_BLADES, "NUM_SPLITTER_BLADES"},
      {FileKey::AXIAL_LENGTH_RATIO, "AXIAL_LENGTH_RATIO"},
      {FileKey::FLUID, "FLUID"},
      {FileKey::PRESSURE, "PRESSURE"},
@@ -102,9 +104,11 @@ struct Geometry {
     double beta2;
     double blockage1;
     double blockage2;
-    double Z;
+    double ZFull;
+    double ZSplit;
     double axialLengthRatio;
-    double axialLength;
+    double deltaZ;
+    double lb;
     double area1;
     double area2;
     double throatArea;

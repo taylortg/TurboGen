@@ -97,11 +97,5 @@
     "clang-format.executable": "C:/Program Files/LLVM/bin/clang-format.exe",
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "xaver.clang-format",
-    "clang-format.style": "file",
-    "clangd.arguments" : [
-        "--clang-tidy"
-    ],
-    "clangd.path": "C:/Program Files/LLVM/bin/clangd.exe",
-    "C_Cpp.default.compilerPath": "cl.exe",
-    "C_Cpp.default.cppStandard": "c++20"
+    "clang-format.style": "file"
 }

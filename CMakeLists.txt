@@ -48,6 +48,6 @@ add_definitions(-DCOOLPROP_USE_CXX11)
 # Ensure fmt.dll is available at runtime
 add_custom_command(TARGET TurboGen POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#    ${CMAKE_BINARY_DIR}/fmt/bin/Debug/fmtd.dll ${CMAKE_BINARY_DIR}/Debug
-    ${CMAKE_BINARY_DIR}/fmt/bin/fmtd.dll ${CMAKE_BINARY_DIR}
+   ${CMAKE_BINARY_DIR}/fmt/bin/Debug/fmtd.dll ${CMAKE_BINARY_DIR}/Debug
+    # ${CMAKE_BINARY_DIR}/fmt/bin/fmtd.dll ${CMAKE_BINARY_DIR}
 )
