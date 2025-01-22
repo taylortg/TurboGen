@@ -51,8 +51,7 @@ int main(int argc, char** argv) {
     impeller.calculateInletCondition("Aungier");
     // impeller.calculateOutletCondition("Japikse", "Wiesner");
     impeller.calculateOutletCondition("Aungier", "Wiesner");
-    // impeller.estimateAxialLength();
-    // plotVelocityTriangle(impeller, true);
+    plotVelocityTriangle(impeller, true);
 
     return 0;
 }

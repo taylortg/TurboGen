@@ -395,8 +395,8 @@ std::optional<double> Impeller::outletAungierSolver(int maxIterations, double to
 
             ImpellerLosses losses = internalLosses();
             double H02real = outlet.isentropic.props.H + 5000.0;
-            fmt::println("outlet.isentropic.props.H: {}", outlet.isentropic.props.H);
-            fmt::println("H02real: {}", H02real);
+            // fmt::println("outlet.isentropic.props.H: {}", outlet.isentropic.props.H);
+            // fmt::println("H02real: {}", H02real);
             rotorEfficiency = (outlet.isentropic.props.H - inlet.total.props.H) / (H02real - inlet.total.props.H);
             effError = std::abs((rotorEfficiency - effOld) / effOld);
 
@@ -520,8 +520,8 @@ void Impeller::calculateSlip(std::string slipModel) {
 
 void Impeller::estimateAxialLength() {
     // Aungier 2000 pg.113
-    flowCoeff = op.mfr / (inlet.total.props.D * PI * std::pow((geom.r2 * MM_M), 2) * outlet.tip.U);
-    geom.deltaZ = (0.014 + 0.023 * (geom.r2 / geom.r1h) + 1.58 * flowCoeff);
+    flowCoeff = op.mfr / (inlet.total.props.D * geom.area2 * outlet.tip.U);
+    geom.deltaZ = (2 * geom.r2 * MM_M) * (0.014 + 0.023 * (geom.r2 / geom.r1h) + 1.58 * flowCoeff);
 }
 
 ImpellerLosses Impeller::internalLosses() {
@@ -538,7 +538,7 @@ ImpellerLosses Impeller::internalLosses() {
     double tipArea = 0.0;
     double tipPerimeter = 0.0;
 
-    if (geom.ZSplit > 0) {
+    if (geom.ZSplit != 0) {
         tipArea = std::abs(geom.b2 * (2 * PI * (geom.r2 * MM_M) / geom.ZFull - (geom.ZFull + geom.ZSplit) * tb) *
                            std::cos(outlet.rms.beta * DEG_RAD));
         tipPerimeter = 4 * (geom.b2 + 2 * PI * (geom.r2 * MM_M) / (geom.ZFull + geom.ZSplit));
@@ -551,7 +551,7 @@ ImpellerLosses Impeller::internalLosses() {
     double throatPerimeter =
         2 * ((geom.r1t * MM_M) - (geom.r1h * MM_M) + PI * (geom.r1t * MM_M) + (geom.r1h * MM_M) / geom.ZFull);
     losses.impeller = 2 * (throatArea / throatPerimeter + tipArea / tipPerimeter);
-    fmt::print("losses.impeller: {:.4f}\n", losses.impeller);
+
     double WBar = (inlet.rms.C * ((geom.r1t * MM_M) / (geom.r1rms * MM_M)) + outlet.rms.C + inlet.tip.W +
                    2.0 * inlet.hub.W + 3.0 * outlet.rms.W) /
                   8.0;
@@ -563,8 +563,10 @@ ImpellerLosses Impeller::internalLosses() {
     estimateAxialLength();
     geom.lb = (geom.deltaZ - (geom.b2 * MM_M) / 2.0) +
               ((2 * geom.r2 * MM_M) - (2 * geom.r1rms * MM_M)) / (2.0 * std::cos(geom.beta2 * DEG_RAD));
+    // Lh = (r4 * (1 - r2rms * 2 / 0.3048) / (math.cos(beta4 / 180 * math.pi)));
+    fmt::print("geom.lb: {:.4f}\n", geom.lb);
 
-    losses.skinFriction = 2.0 * cf * geom.lb / losses.impeller * std::pow(WBar, 2);
+    losses.skinFriction = (2.0 * cf * geom.lb / losses.impeller * std::pow(WBar, 2)) * 1000;
     fmt::print("losses.skinFriction: {:.4f}\n", losses.skinFriction);
 
     // Blade work input loss
@@ -582,15 +584,31 @@ ImpellerLosses Impeller::internalLosses() {
         fmt::print("bb2: {:.4f}\n", bb2);
         lambda = (1.0 / (1.0 - bb2));
         fmt::print("lambda: {:.4f}\n", lambda);
-        losses.bladeLoading = outlet.rms.sigma * (1.0 + lambda * phi2 * std::tan(geom.beta2 * DEG_RAD)) -
-                              inlet.rms.U * inlet.rms.C_theta / std::pow(outlet.rms.U, 2);
-        fmt::print("losses.bladeLoading: {:.4f}\n", losses.bladeLoading);
+        losses.bladeWork = outlet.rms.sigma * (1.0 + lambda * phi2 * std::tan(geom.beta2 * DEG_RAD)) -
+                           inlet.rms.U * inlet.rms.C_theta / std::pow(outlet.rms.U, 2);
+        fmt::print("losses.bladeWork: {:.4f}\n", losses.bladeWork);
     } else {
-        losses.bladeLoading =
+        losses.bladeWork =
             (outlet.rms.U * outlet.rms.C_theta - inlet.rms.U * inlet.rms.C_theta) / std::pow(outlet.rms.U, 2);
-        fmt::print("losses.bladeLoading: {:.4f}\n", losses.bladeLoading);
+        fmt::print("losses.bladeWork: {:.4f}\n", losses.bladeWork);
     }
 
+    double Z = 0.0;
+    if (geom.ZSplit > 0) {
+        Z = geom.ZFull + (geom.lbSplitter / geom.lb) * geom.ZSplit;
+    } else {
+        Z = geom.ZFull;
+    }
+    double Df =
+        1.0 - outlet.rms.W / inlet.tip.W +
+        (0.75 * (outlet.rms.U * outlet.rms.C_theta - inlet.rms.U * inlet.rms.C_theta) / std::pow(outlet.rms.U, 2)) /
+            ((inlet.rms.W / outlet.rms.W) * ((Z / PI) * (1 - geom.r1t / geom.r2) + (2 * geom.r1t / geom.r2)));
+
+    losses.bladeLoading = 0.05 * std::pow(Df, 2) * std::pow(outlet.rms.U, 2);
+    fmt::print("losses.bladeLoading: {:.4f}\n", losses.bladeLoading);
+
+    double temp = skinFrictionLosses(2.e-5, 1e-8);
+    fmt::print("temp: {}\n", temp);
     return losses;
 }
 
@@ -609,8 +627,6 @@ double Impeller::skinFrictionCoefficient(double Re, double dH, double E, double 
             X = -2.0 * std::log10(2.51 * X / Re);
             error = std::abs((last - X) / X);
             iteration++;
-            fmt::println("Iteration {}", iteration);
-            fmt::println("X {:.4f}\tError: {:.4e}", X, error);
         } while (error > tol && iteration <= 100);
         double cfts = 0.25 * std::pow(X, -2);
         // Turbulent flow over a fully rough surface given by (Aungier, 2000)
@@ -634,6 +650,47 @@ double Impeller::skinFrictionCoefficient(double Re, double dH, double E, double 
     }
 
     return cf;
+}
+
+double colebrook(double x, double r, double Re) {
+    return -2.0 * std::log10(r / 3.72 + 2.51 / Re / std::sqrt(x)) - 1.0 / std::sqrt(x);
+}
+
+double Impeller::skinFrictionLosses(double E, double tol) {
+    double Cf, fx, dfx;
+    double la = geom.r1h / geom.r1t;
+    geom.Lh = (geom.r2 * MM_M) * (1.0 - (geom.r1rms * MM_M) * 2.0 / 0.3048) / (std::cos(geom.beta2 * DEG_RAD));
+    geom.Dh = (2 * (geom.r2 * MM_M) *
+               (1.0 / (geom.ZFull / PI / std::cos(geom.beta2 * DEG_RAD) + 2.0 * (geom.r2 * MM_M) / (geom.b2 * MM_M)) +
+                (geom.r1t * MM_M) / (geom.r2 * MM_M) /
+                    (2.0 / (1.0 - la) +
+                     2.0 * (geom.ZFull) / PI / (1 + la) *
+                         (std::sqrt(1 + (1 + std::pow(la, 2) / 2.0) * std::pow(std::tan(geom.beta1t * DEG_RAD), 2))))));
+
+    double Re = (geom.Dh * (inlet.rms.W + outlet.rms.W) / 2 * (inlet.static_.props.D + outlet.static_.props.D) / 2 /
+                 ((inlet.static_.props.V + outlet.static_.props.V) / 2));
+    fmt::print("Re: {}\n", Re);
+    double r = E / geom.Dh;
+    int iteration = 1;
+    double error = 1.0;
+    double x = 0.01;
+    double xnew = 1.0;
+    double step = 1e-4;
+    do {
+        fx = colebrook(x, r, Re);
+        dfx = colebrook(x + step, r, Re) - colebrook(x - step, r, Re) / (2 * step);
+        if (std::abs(dfx) < 1e-12) {  // Prevent division by near-zero
+            throw std::runtime_error("Derivative is too small, convergence not possible.");
+        }
+        xnew = x - fx / dfx;
+        // fmt::print("iteration: {}\tfx: {}\tdfx: {}\txnew: {}\nerror: {}\n", iteration, fx, dfx, xnew, error);
+        error = std::abs(xnew - x);
+        x = xnew;
+        iteration++;
+    } while (error > 1e-4 && iteration <= 1000);
+    Cf = x;
+    fmt::print("Cf: {}\n", Cf);
+    return 4 * Cf * geom.Lh * std::pow(((inlet.rms.W + outlet.rms.W) / 2.0), 2) / (2 * geom.Dh);
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

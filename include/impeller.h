@@ -12,6 +12,7 @@ struct ImpellerLosses {
     double impeller = 0.0;
     double skinFriction = 0.0;
     double bladeLoading = 0.0;
+    double bladeWork = 0.0;
     double clearance = 0.0;
     double incidence = 0.0;
     double discFriction = 0.0;
@@ -65,6 +66,7 @@ class Impeller {
     void estimateAxialLength();
     ImpellerLosses internalLosses();
     double skinFrictionCoefficient(double Re, double dH, double E, double tol);
+    double skinFrictionLosses(double E, double tol);
 
     // Output functions
     static void printBorder(std::string solver, double& tolerance, int& maxIterations, ImpellerStation station);

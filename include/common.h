@@ -109,6 +109,9 @@ struct Geometry {
     double axialLengthRatio;
     double deltaZ;
     double lb;
+    double Dh;
+    double Lh;
+    double lbSplitter;
     double area1;
     double area2;
     double throatArea;
