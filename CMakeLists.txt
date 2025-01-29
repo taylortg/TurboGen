@@ -36,6 +36,8 @@ add_executable(TurboGen
     src/thermo.cpp
     src/impeller.cpp
     src/plotter.cpp
+    src/cli.cpp
+    correlations/prelimCalcs.cpp
 )
 
 # Include CoolProp and fmt headers

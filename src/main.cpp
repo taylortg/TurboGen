@@ -1,8 +1,9 @@
 #include <thread>
 
-// #include "../externals/CoolProp/include/CoolProp.h"
+#include "../correlations/prelimCalcs.h"
 #include "../externals/fmt/include/fmt/color.h"
 #include "../externals/fmt/include/fmt/core.h"
+#include "../include/cli.h"
 #include "../include/common.h"
 #include "../include/impeller.h"
 #include "../include/plotter.h"
@@ -13,11 +14,16 @@ int main(int argc, char** argv) {
 #ifdef DEBUG
     std::cout << "DEBUG mode is active.\n";
 #endif
+    CLITool cli;
+    cli.run();
 
-    // const std::map<std::string, std::string> inputData = tgparser::readInputFile("../input.in");
-    const std::map<std::string, std::string> inputData =
-        tgparser::readInputFile("./../input.in");       // Hard-coded for Mac
+    std::map<std::string, std::string> inputData;
+    if (cli.fileIsEmpty()) {
+        inputData = tgparser::readInputFile("./../input.in");  // Hard-coded for Mac
         // tgparser::readInputFile("C:/Users/mastodon/Documents/TurboGen/input.in");    // Hard-coded for windows
+    } else {
+        inputData = tgparser::readInputFile(cli.getFileName());
+    }
 
     OperatingCondition op{};
     Geometry geom{};
@@ -48,11 +54,15 @@ int main(int argc, char** argv) {
 
     fmt::print(fg(fmt::color::green), "All filtering completed.\n");
 
-    Impeller impeller(thermo, geom, op);
-    impeller.calculateInletCondition("Aungier");
-    // impeller.calculateOutletCondition("Japikse", "Wiesner");
-    impeller.calculateOutletCondition("Aungier", "Wiesner");
-    plotVelocityTriangle(impeller, true);
+    if (cli.getSizeFlag()) {
+        CaseyRobinsonCorrelations cr(thermo, geom, op);
+    } else {
+        Impeller impeller(thermo, geom, op);
+        impeller.calculateInletCondition("Aungier");
+        // impeller.calculateOutletCondition("Japikse", "Wiesner");
+        impeller.calculateOutletCondition("Aungier", "Wiesner");
+        plotVelocityTriangle(impeller, true);
+    }
 
     return 0;
 }
