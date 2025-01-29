@@ -38,6 +38,8 @@ CaseyRobinsonCorrelations::CaseyRobinsonCorrelations(const ThermoProps& thermo, 
         eta_p = eta_max * (1 - k1 * std::pow((phi_max - phi), 2) - k2 * std::pow((phi_max - phi), 4)) + deta_p;
     }
     fmt::print("eta_p: {:.4f}\n\n\n", eta_p * 100);
+    double D2 = std::sqrt(op.mfr / (thermo.props.D * U2 * phi));
+    fmt::print("eta_p: {:.4f}\n\n\n", eta_p * 100);
 
     namespace fs = std::filesystem;
     fs::path dirPath = "./../tmp";
