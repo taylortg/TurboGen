@@ -94,7 +94,8 @@
         "unordered_set": "cpp",
         "xstddef": "cpp"
     },
-    "clang-format.executable": "C:/Program Files/LLVM/bin/clang-format.exe",
+    // "clang-format.executable": "C:/Program Files/LLVM/bin/clang-format.exe",
+    "clang-format.executable": "/opt/homebrew/Cellar/clang-format/19.1.7/bin/clang-format",
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "xaver.clang-format",
     "clang-format.style": "file"

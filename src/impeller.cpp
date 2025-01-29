@@ -520,8 +520,11 @@ void Impeller::calculateSlip(std::string slipModel) {
 
 void Impeller::estimateAxialLength() {
     // Aungier 2000 pg.113
-    flowCoeff = op.mfr / (inlet.total.props.D * geom.area2 * outlet.tip.U);
+    flowCoeff = op.mfr / (outlet.total.props.D * geom.area2 * outlet.tip.U);
     geom.deltaZ = (2 * geom.r2 * MM_M) * (0.014 + 0.023 * (geom.r2 / geom.r1h) + 1.58 * flowCoeff);
+    fmt::println("(flowCoeff): {:.6f}", flowCoeff);
+    fmt::println("(2 * geom.r2 * MM_M): {:.6f}", (2 * geom.r2 * MM_M));
+    fmt::println("deltaZ: {:.6f}", geom.deltaZ);
 }
 
 ImpellerLosses Impeller::internalLosses() {
@@ -561,10 +564,11 @@ ImpellerLosses Impeller::internalLosses() {
     cf = skinFrictionCoefficient(ReImpeller, losses.impeller, 0.0000050, 1e-8);
 
     estimateAxialLength();
-    geom.lb = (geom.deltaZ - (geom.b2 * MM_M) / 2.0) +
-              ((2 * geom.r2 * MM_M) - (2 * geom.r1rms * MM_M)) / (2.0 * std::cos(geom.beta2 * DEG_RAD));
+    double d1 = std::sqrt(std::pow((2 * geom.r1t * MM_M), 2) + std::pow((2 * geom.r1h * MM_M), 2));
+    geom.lb =
+        (geom.deltaZ - (geom.b2 * MM_M) / 2.0) + ((2 * geom.r2 * MM_M) - d1) / (2.0 * std::cos(geom.beta2 * DEG_RAD));
+    fmt::print("((2 * geom.r2 * MM_M) - d1): {:.6f}\n", ((2 * geom.r2 * MM_M) - d1));
     // Lh = (r4 * (1 - r2rms * 2 / 0.3048) / (math.cos(beta4 / 180 * math.pi)));
-    fmt::print("geom.lb: {:.4f}\n", geom.lb);
 
     losses.skinFriction = (2.0 * cf * geom.lb / losses.impeller * std::pow(WBar, 2)) * 1000;
     fmt::print("losses.skinFriction: {:.4f}\n", losses.skinFriction);

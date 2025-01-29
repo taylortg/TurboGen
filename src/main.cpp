@@ -16,7 +16,8 @@ int main(int argc, char** argv) {
 
     // const std::map<std::string, std::string> inputData = tgparser::readInputFile("../input.in");
     const std::map<std::string, std::string> inputData =
-        tgparser::readInputFile("C:/Users/mastodon/Documents/TurboGen/input.in");
+        tgparser::readInputFile("./../input.in");       // Hard-coded for Mac
+        // tgparser::readInputFile("C:/Users/mastodon/Documents/TurboGen/input.in");    // Hard-coded for windows
 
     OperatingCondition op{};
     Geometry geom{};
