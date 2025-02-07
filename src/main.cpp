@@ -3,7 +3,8 @@
 #include "../correlations/prelimCalcs.h"
 #include "../externals/fmt/include/fmt/color.h"
 #include "../externals/fmt/include/fmt/core.h"
-#include "../include/cli.h"
+#include "../include/Aungier.h"
+// #include "../include/cli.h"
 #include "../include/common.h"
 #include "../include/impeller.h"
 #include "../include/plotter.h"
@@ -14,16 +15,15 @@ int main(int argc, char** argv) {
 #ifdef DEBUG
     std::cout << "DEBUG mode is active.\n";
 #endif
-    CLITool cli;
-    cli.run();
+    // CLITool cli;
+    // cli.run();
 
     std::map<std::string, std::string> inputData;
-    if (cli.fileIsEmpty()) {
-        inputData = tgparser::readInputFile("./../input.in");  // Hard-coded for Mac
-        // tgparser::readInputFile("C:/Users/mastodon/Documents/TurboGen/input.in");    // Hard-coded for windows
-    } else {
-        inputData = tgparser::readInputFile(cli.getFileName());
-    }
+    // if (cli.fileIsEmpty()) {
+    inputData = tgparser::readInputFile("./../input.in");
+    // } else {
+    //     inputData = tgparser::readInputFile(cli.getFileName());
+    // }
 
     OperatingCondition op{};
     Geometry geom{};
@@ -54,15 +54,17 @@ int main(int argc, char** argv) {
 
     fmt::print(fg(fmt::color::green), "All filtering completed.\n");
 
-    if (cli.getSizeFlag()) {
-        CaseyRobinsonCorrelations cr(thermo, geom, op);
-    } else {
-        Impeller impeller(thermo, geom, op);
-        impeller.calculateInletCondition("Aungier");
-        // impeller.calculateOutletCondition("Japikse", "Wiesner");
-        impeller.calculateOutletCondition("Aungier", "Wiesner");
-        plotVelocityTriangle(impeller, true);
-    }
+    // if (cli.getSizeFlag()) {
+    //     CaseyRobinsonCorrelations cr(thermo, geom, op);
+    // } else {
+    Impeller impeller(thermo, geom, op);
+    Aungier aungier(impeller);
+    aungier.runCalculations();
+    // impeller.calculateInletCondition("Aungier");
+    // // impeller.calculateOutletCondition("Japikse", "Wiesner");
+    // impeller.calculateOutletCondition("Aungier", "Wiesner");
+    // plotVelocityTriangle(impeller, true);
+    // }
 
     return 0;
 }

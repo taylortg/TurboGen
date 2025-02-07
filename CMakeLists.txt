@@ -35,6 +35,7 @@ add_executable(TurboGen
     src/tgParser.cpp
     src/thermo.cpp
     src/impeller.cpp
+    src/Aungier.cpp
     src/plotter.cpp
     src/cli.cpp
     correlations/prelimCalcs.cpp

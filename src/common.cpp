@@ -61,7 +61,8 @@ Geometry filterFileContent_geom(const std::map<std::string, std::string>& fileCo
     setPropertyFromFileContent(fileContent, key, geom.beta1h);
     key = keyToString(FileKey::BETA1T);
     setPropertyFromFileContent(fileContent, key, geom.beta1t);
-    geom.beta1rms = -getRMS(geom.beta1h, geom.beta1t);
+    // assuming linear angle distribution from hub to shroud of impeller inducer blade
+    geom.beta1rms = (((geom.r1rms - geom.r1h) / (geom.r1t - geom.r1h)) * (geom.beta1t - geom.beta1h)) + geom.beta1h;
 
     key = keyToString(FileKey::BETA2);
     setPropertyFromFileContent(fileContent, key, geom.beta2);

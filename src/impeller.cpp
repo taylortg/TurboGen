@@ -475,7 +475,7 @@ void Impeller::calculateInletVelocities() {
             velArr[i].C_m = velArr[i].C * std::cos(velArr[i].alpha);
             velArr[i].C_theta = velArr[i].C * std::sin(velArr[i].alpha);
             velArr[i].W_m = velArr[i].C_m;
-            velArr[i].W_theta = velArr[i].U = velArr[i].C_theta;
+            velArr[i].W_theta = velArr[i].U - velArr[i].C_theta;
             velArr[i].W = sqrt(pow(velArr[i].W_m, 2.) + pow(velArr[i].W_theta, 2.));
             velArr[i].beta = -std::atan(velArr[i].W_theta / velArr[i].W_m);
         }
