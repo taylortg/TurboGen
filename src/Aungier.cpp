@@ -47,9 +47,7 @@ Aungier::Aungier(const Impeller& impeller)
       workCoeff(impeller.workCoeff),
       Re_b2(impeller.Re_b2),
       Re_r2(impeller.Re_r2),
-      dH0(impeller.dH0) {
-    fmt::println("Copied impeller class to Aungier solver!");
-}
+      dH0(impeller.dH0) {}
 
 void Aungier::runCalculations() { inletCalcs(); }
 

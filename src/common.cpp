@@ -87,7 +87,7 @@ Geometry filterFileContent_geom(const std::map<std::string, std::string>& fileCo
 ThermoProps filterFileContent_thermo(const std::map<std::string, std::string>& fileContent) {
     try {
         auto key = keyToString(FileKey::FLUID);
-        ThermoProps thermo{fileContent.at(key)};
+        ThermoProps thermo(fileContent.at(key));
 
         key = keyToString(FileKey::PRESSURE);
         setPropertyFromFileContent(fileContent, key, thermo.props.P);

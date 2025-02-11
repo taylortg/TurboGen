@@ -1,6 +1,7 @@
 #ifndef THERMO_H
 #define THERMO_H
 
+#include <iostream>
 #include <limits>
 #include <ostream>
 

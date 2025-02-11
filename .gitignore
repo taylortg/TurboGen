@@ -1,8 +1,9 @@
 build
-.vs
-.vscode
+/.vscode
+/.vscode/settings.json
 externals/fmt
 utils/build-utils
 utils/CADfunctions/a.exe
 out/build
 tg
+.DS_Store
