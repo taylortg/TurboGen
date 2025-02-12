@@ -22,6 +22,8 @@ if(APPLE)
 elseif(WIN32)
     # Windows: Use the existing local fmt subdirectory
     add_subdirectory(${fmt_SOURCE_DIR} ${CMAKE_BINARY_DIR}/fmt)
+elseif(UNIX)
+    add_subdirectory(${fmt_SOURCE_DIR} ${CMAKE_BINARY_DIR}/fmt)
 endif()
 
 # Include directories for fmt and CoolProp
@@ -57,6 +59,11 @@ elseif(WIN32)
     # Windows: Link fmt as a subdirectory (static or shared, depending on your setup)
     target_link_libraries(TurboGen PRIVATE 
         ${COOLPROP_DIR}/lib/CoolPropd.lib
+        fmt::fmt                            
+    )
+elseif(UNIX)
+    target_link_libraries(TurboGen PRIVATE 
+        ${COOLPROP_DIR}/lib/libCoolProp.a
         fmt::fmt                            
     )
 endif()
