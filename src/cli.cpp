@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-CLITool::CLITool() : fileName(""), preliminarySizingFlag(false) {}
+CLITool::CLITool(Flags* flags) : fileName(""), flags(flags) {}
 
 void CLITool::run() {
     std::string input;
@@ -12,10 +12,10 @@ void CLITool::run() {
         std::cout << "> Do you want to run the correlation based preliminary sizing tool (y/n)? ";
         std::getline(std::cin, input);
         if (input == "y" || input == "Y") {
-            preliminarySizingFlag = true;
+            flags->preliminarySizingFlag = true;
             break;
         } else if (input == "n" || input == "N") {
-            preliminarySizingFlag = false;
+            flags->preliminarySizingFlag = false;
             break;
         } else {
             std::cout << "Invalid input. Please enter 'y' or 'n'.\n";
@@ -41,5 +41,3 @@ void CLITool::run() {
 bool CLITool::fileIsEmpty() { return fileName.empty(); }
 
 const std::string CLITool::getFileName() { return fileName; }
-
-const bool CLITool::getSizeFlag() { return preliminarySizingFlag; }

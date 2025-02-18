@@ -117,6 +117,11 @@ struct Geometry {
     double throatArea;
 };
 
+struct Flags {
+    bool preliminarySizingFlag = false;
+    bool inletInducerOptFlag = false;
+};
+
 std::optional<double> tryConvertingStrToDouble(const std::string& var);
 OperatingCondition filterFileContent_op(const std::map<std::string, std::string>& fileContent);
 Geometry filterFileContent_geom(const std::map<std::string, std::string>& fileContent);

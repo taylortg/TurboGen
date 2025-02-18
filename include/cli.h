@@ -3,19 +3,26 @@
 
 #include <string>
 
+#include "common.h"
+
+enum Prompts {
+    // RUN_CORRELATION,
+    // INPUT_FILE,
+    INLET_OPTIMIZATION
+};
+
 class CLITool {
    private:
     std::string fileName;
-    bool preliminarySizingFlag;
 
    public:
-    CLITool();
+    CLITool(Flags* flags);
     void run();
 
     const std::string getFileName();
     bool fileIsEmpty();
 
-    const bool getSizeFlag();
+    Flags* flags;
 };
 
 #endif  // CLI_H
