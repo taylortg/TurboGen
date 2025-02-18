@@ -4,7 +4,7 @@
 #include "../externals/fmt/include/fmt/color.h"
 #include "../externals/fmt/include/fmt/core.h"
 #include "../include/Aungier.h"
-// #include "../include/cli.h"
+#include "../include/cli.h"
 #include "../include/common.h"
 #include "../include/impeller.h"
 #include "../include/plotter.h"
@@ -15,8 +15,9 @@ int main(int argc, char** argv) {
 #ifdef DEBUG
     std::cout << "DEBUG mode is active.\n";
 #endif
-    // CLITool cli;
-    // cli.run();
+    Flags flags;
+    CLITool cli(&flags);
+    cli.run();
 
     std::map<std::string, std::string> inputData;
     // if (cli.fileIsEmpty()) {

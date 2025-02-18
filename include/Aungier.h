@@ -12,14 +12,16 @@ class Aungier {
     OperatingCondition op;
     Geometry geom;
     double pr_tt, isenEff, flowCoeff, workCoeff, Re_b2, Re_r2, dH0;
+    bool optimizationFlag;
 
-    Aungier(const ImpellerState& inlet, const ImpellerState& outlet, const OperatingCondition& op,
-            const Geometry& geom);
-    Aungier(const ThermoProps& thermo, const Geometry& geom, const OperatingCondition& op);
-    Aungier(const Impeller& impeller);
+    Aungier(const ImpellerState& inlet, const ImpellerState& outlet, const OperatingCondition& op, const Geometry& geom,
+            const bool optimizationFlag);
+    Aungier(const ThermoProps& thermo, const Geometry& geom, const OperatingCondition& op, const bool optimizationFlag);
+    Aungier(const Impeller& impeller, const bool optimizationFlag);
 
     void runCalculations();
     void inletCalcs();
+    void inletInducerOptimization();
     void calculateInletVelocities();
 };
 #endif  // AUNGIER_H

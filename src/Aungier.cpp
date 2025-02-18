@@ -7,7 +7,7 @@
 //          Aungier class
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Aungier::Aungier(const ImpellerState& inlet, const ImpellerState& outlet, const OperatingCondition& op,
-                 const Geometry& geom)
+                 const Geometry& geom, const bool optimizationFlag)
     : inlet(inlet),
       outlet(outlet),
       throat(inlet),
@@ -19,9 +19,11 @@ Aungier::Aungier(const ImpellerState& inlet, const ImpellerState& outlet, const 
       workCoeff(0.0),
       Re_b2(0.0),
       Re_r2(0.0),
-      dH0(0.0) {}
+      dH0(0.0),
+      optimizationFlag(optimizationFlag) {}
 
-Aungier::Aungier(const ThermoProps& thermo, const Geometry& geom, const OperatingCondition& op)
+Aungier::Aungier(const ThermoProps& thermo, const Geometry& geom, const OperatingCondition& op,
+                 const bool optimizationFlag)
     : inlet(thermo),
       outlet(thermo),
       throat(thermo),
@@ -33,9 +35,10 @@ Aungier::Aungier(const ThermoProps& thermo, const Geometry& geom, const Operatin
       workCoeff(0.0),
       Re_b2(0.0),
       Re_r2(0.0),
-      dH0(0.0) {}
+      dH0(0.0),
+      optimizationFlag(optimizationFlag) {}
 
-Aungier::Aungier(const Impeller& impeller)
+Aungier::Aungier(const Impeller& impeller, const bool optimizationFlag)
     : inlet(impeller.inlet),
       outlet(impeller.outlet),
       throat(impeller.inlet),
@@ -47,7 +50,8 @@ Aungier::Aungier(const Impeller& impeller)
       workCoeff(impeller.workCoeff),
       Re_b2(impeller.Re_b2),
       Re_r2(impeller.Re_r2),
-      dH0(impeller.dH0) {}
+      dH0(impeller.dH0),
+      optimizationFlag(optimizationFlag) {}
 
 void Aungier::runCalculations() { inletCalcs(); }
 
@@ -72,16 +76,11 @@ void Aungier::inletCalcs() {
         inlet.rms.C_m = op.mfr / (rho1_guess * A1 * (1.0 - geom.blockage1));
         if (op.alpha == 0) {
             inlet.rms.C = inlet.rms.C_m;
-            fmt::println("inlet.rms.C: {}", inlet.rms.C);
+            // fmt::println("inlet.rms.C: {}", inlet.rms.C);
         } else {
             inlet.rms.C = inlet.rms.C_m / std::tan(op.alpha * DEG_RAD);
         }
         inlet.static_.props.H = inlet.total.props.H - (std::pow(inlet.rms.C, 2) / 2.0);
-        // inlet.rms.M = inlet.rms.C / inlet.static_.props.A;
-        // inlet.static_.props.T = inlet.total.props.T / (1. + (inlet.static_.props.Y - 1.) / 2. * pow(inlet.rms.M, 2));
-        // inlet.static_.props.P = inlet.total.props.P * std::pow((inlet.static_.props.T / inlet.total.props.T),
-        //                                                        inlet.static_.props.Y / (inlet.static_.props.Y
-        //                                                        - 1.0));
         inlet.static_.set_props("HS", inlet.static_.props.H, inlet.static_.props.S);
         error = std::abs((inlet.static_.props.D / rho1_guess) - 1.0);
         Impeller::printIteration(iteration, inlet.static_.props.P, inlet.static_.props.T, inlet.static_.props.D, error,
@@ -99,6 +98,12 @@ void Aungier::inletCalcs() {
         fmt::print(fg(fmt::color::green), "Solution converged!\n");
     } else {
         fmt::print(fg(fmt::color::red), "Solution did not converge, results could be inaccurate!\n");
+    }
+}
+
+void Aungier::inletInducerOptimization() {
+    if (!optimizationFlag) {
+        return;  // if flag was set to false, just do nothing with this function
     }
 }
 
