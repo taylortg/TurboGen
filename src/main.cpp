@@ -20,11 +20,7 @@ int main(int argc, char** argv) {
     cli.run();
 
     std::map<std::string, std::string> inputData;
-    // if (cli.fileIsEmpty()) {
     inputData = tgparser::readInputFile("./../input.in");
-    // } else {
-    //     inputData = tgparser::readInputFile(cli.getFileName());
-    // }
 
     OperatingCondition op{};
     Geometry geom{};
@@ -55,17 +51,9 @@ int main(int argc, char** argv) {
 
     fmt::print(fg(fmt::color::green), "All filtering completed.\n");
 
-    // if (cli.getSizeFlag()) {
-    //     CaseyRobinsonCorrelations cr(thermo, geom, op);
-    // } else {
     Impeller impeller(thermo, geom, op);
-    Aungier aungier(impeller);
+    Aungier aungier(impeller, flags.inletInducerOptFlag);
     aungier.runCalculations();
-    // impeller.calculateInletCondition("Aungier");
-    // // impeller.calculateOutletCondition("Japikse", "Wiesner");
-    // impeller.calculateOutletCondition("Aungier", "Wiesner");
-    // plotVelocityTriangle(impeller, true);
-    // }
 
     return 0;
 }

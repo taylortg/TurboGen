@@ -1,8 +1,17 @@
 #ifndef AUNGIER_H
 #define AUNGIER_H
 
+#include <array>
+
 #include "common.h"
 #include "impeller.h"
+
+struct AungierOptData {
+    ThermoProps thermo;
+    Velocities vel;
+    double area;
+    double r1s;
+};
 
 class Aungier {
    public:

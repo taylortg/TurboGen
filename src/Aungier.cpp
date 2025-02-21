@@ -53,7 +53,10 @@ Aungier::Aungier(const Impeller& impeller, const bool optimizationFlag)
       dH0(impeller.dH0),
       optimizationFlag(optimizationFlag) {}
 
-void Aungier::runCalculations() { inletCalcs(); }
+void Aungier::runCalculations() {
+    inletCalcs();
+    inletInducerOptimization();
+}
 
 void Aungier::inletCalcs() {
     int maxIterations = 100;
@@ -104,6 +107,37 @@ void Aungier::inletCalcs() {
 void Aungier::inletInducerOptimization() {
     if (!optimizationFlag) {
         return;  // if flag was set to false, just do nothing with this function
+    }
+
+    std::array<AungierOptData, 11> optData;
+    for (auto& data : optData) {
+        data.thermo = inlet.total;
+        data.vel = inlet.rms;
+    }
+
+    // Cm Range should be 50-250 m/s
+    std::array<double, 11> CmRange;
+    for (int i = 0; i < CmRange.size(); i++) {
+        CmRange[i] = i * 20 + 50;
+    }
+
+    for (int i = 0; i < CmRange.size(); i++) {
+        optData[i].vel.C_m = CmRange[i];
+        optData[i].vel.C_theta = CmRange[i] * std::tan(op.alpha * DEG_RAD);
+        optData[i].vel.C = std::sqrt(CmRange[i] * CmRange[i] + optData[i].vel.C_theta * optData[i].vel.C_theta);
+        optData[i].thermo.props.T =
+            inlet.total.props.T - (optData[i].vel.C * optData[i].vel.C) / (2.0 * optData[i].thermo.props.CP);
+        double k = optData[i].thermo.props.Y / (optData[i].thermo.props.Y - 1.0);
+        optData[i].thermo.props.P = inlet.total.props.P * std::pow(optData[i].thermo.props.T / inlet.total.props.T, k);
+        optData[i].thermo.set_props("PT", optData[i].thermo.props.P, optData[i].thermo.props.T);
+        optData[i].vel.M = optData[i].vel.C / optData[i].thermo.props.A;
+        optData[i].area = op.mfr / optData[i].thermo.props.D / optData[i].vel.C_m / (1 - geom.blockage1);
+        optData[i].r1s = std::sqrt(optData[i].area / PI + ((geom.r1h * MM_M) * (geom.r1h * MM_M)));
+        optData[i].vel.U = op.omega * optData[i].r1s;
+        optData[i].vel.W =
+            std::sqrt(optData[i].vel.C_m * optData[i].vel.C_m +
+                      ((optData[i].vel.U * optData[i].vel.U) - (optData[i].vel.C_theta * optData[i].vel.C_theta)));
+        fmt::println("r1s: {:.4f}, Cm: {:.3f}, W1s: {:.3f}", optData[i].r1s, optData[i].vel.C_m, optData[i].vel.W);
     }
 }
 
