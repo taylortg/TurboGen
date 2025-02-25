@@ -1,5 +1,8 @@
 #include "../include/Aungier.h"
 
+#include <filesystem>
+#include <fstream>
+
 #include "../externals/fmt/include/fmt/color.h"
 #include "../externals/fmt/include/fmt/core.h"
 
@@ -138,6 +141,31 @@ void Aungier::inletInducerOptimization() {
             std::sqrt(optData[i].vel.C_m * optData[i].vel.C_m +
                       ((optData[i].vel.U * optData[i].vel.U) - (optData[i].vel.C_theta * optData[i].vel.C_theta)));
         fmt::println("r1s: {:.4f}, Cm: {:.3f}, W1s: {:.3f}", optData[i].r1s, optData[i].vel.C_m, optData[i].vel.W);
+    }
+
+    namespace fs = std::filesystem;
+    fs::path dirPath = "./../tmp";
+    try {
+        if (!fs::exists(dirPath)) {
+            fs::create_directory(dirPath);
+        }
+
+        std::ofstream file(dirPath.string() + "/optVelocities.csv", std::ios::out);
+        if (file.is_open()) {
+            file << fmt::format("r1s,Cm,W1s\n");
+            for (auto data : optData) {
+                file << fmt::format("{},{},{}\n", data.r1s, data.vel.C_m, data.vel.W);
+            }
+        }
+        file.close();
+        auto result = std::system("python ./../scripts/inletOptimizationAungier.py");
+        if (result == 0) {
+            fmt::print(fg(fmt::color::green), "Python script for velocity triangles ran successfully\n");
+        } else {
+            fmt::print(fg(fmt::color::red), "Error running velocity triangle script\n");
+        }
+    } catch (std::exception& e) {
+        fmt::print(fg(fmt::color::red), "Error: {}\n", e.what());
     }
 }
 
