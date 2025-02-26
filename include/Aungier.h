@@ -32,5 +32,6 @@ class Aungier {
     void inletCalcs();
     void inletInducerOptimization();
     void calculateInletVelocities();
+    void throatCalcs();
 };
 #endif  // AUNGIER_H

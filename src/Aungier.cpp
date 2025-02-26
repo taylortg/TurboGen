@@ -1,7 +1,9 @@
 #include "../include/Aungier.h"
 
+#include <array>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 
 #include "../externals/fmt/include/fmt/color.h"
 #include "../externals/fmt/include/fmt/core.h"
@@ -59,6 +61,7 @@ Aungier::Aungier(const Impeller& impeller, const bool optimizationFlag)
 void Aungier::runCalculations() {
     inletCalcs();
     inletInducerOptimization();
+    throatCalcs();
 }
 
 void Aungier::inletCalcs() {
@@ -68,12 +71,25 @@ void Aungier::inletCalcs() {
     double r1h = geom.r1h * MM_M;
     double r1t = geom.r1t * MM_M;
     double b1 = r1t - r1h;
-    double A1 = PI * (std::pow(r1t, 2) - std::pow(r1h, 2)) - b1 * geom.ZFull * (2.11 * MM_M);
-    fmt::println("A1: {}", A1);
     double r1 = getRMS(r1t, r1h);
     double rho1_guess = inlet.total.props.D;
     double tol = 10e-6;
     inlet.static_ = inlet.total;
+
+    // Set blade thickness to 2mm by default
+    double tb1 = 2.0 * MM_M;
+    std::string temp;
+    fmt::print("Enter the inlet blade thickness in mm: ");
+    std::getline(std::cin, temp);
+    try {
+        tb1 = std::stod(temp);
+    } catch (const std::invalid_argument&) {
+        fmt::println("No conversion could be performed");
+    } catch (const std::out_of_range&) {
+        fmt::println("Could not convert string to double, value is out of range");
+    }
+    // Use the updated blade thickness from user to calculate the inlet area
+    double A1 = PI * (std::pow(r1t, 2) - std::pow(r1h, 2)) - b1 * geom.ZFull * (tb1 * MM_M);
 
     Impeller::printBorder("Aungier", tol, maxIterations, INLET);
     do {
@@ -164,6 +180,8 @@ void Aungier::inletInducerOptimization() {
         } else {
             fmt::print(fg(fmt::color::red), "Error running velocity triangle script\n");
         }
+
+        fs::remove_all(dirPath);
     } catch (std::exception& e) {
         fmt::print(fg(fmt::color::red), "Error: {}\n", e.what());
     }
@@ -191,4 +209,41 @@ void Aungier::calculateInletVelocities() {
     inlet.hub = velArr[0];
     inlet.rms = velArr[1];
     inlet.tip = velArr[2];
+}
+
+void Aungier::throatCalcs() {
+    double x = ((geom.r2 - geom.r1h) * (1.0 / std::cos(PI / 18.0) - std::tan(PI / 18.0)) - geom.b2) * MM_M;
+    double y = (geom.r2 - geom.r1t) * MM_M;
+    fmt::println("x: {}, y: {}", x, y);
+
+    // mj is the value of m at the junction of arcs
+    double mj_m4 = (x + (1.0 - sqrt(2.0)) * y) / ((2.0 - sqrt(2.0)) * (x + y));
+    fmt::println("mj/mtip: {}", mj_m4);
+
+    double m4_tip = (PI / 4.0) * (x + y);
+    double m4_hub = ((4 * PI / 9.0) * (1.0 / std::cos(PI / 18.0)) * (geom.r2 - geom.r1h)) * MM_M;
+    fmt::println("m4_tip: {}, m4_hub: {}", m4_tip, m4_hub);
+
+    // set up arrays for meridional distance from 0.0-1.0 and respective calculations
+    std::array<double, 101> m_m4;
+    std::array<double, 101> phi_tip;
+    std::array<double, 101> phi_hub;
+    std::array<double, 101> r_tip;
+    std::array<double, 101> r_hub;
+
+    for (int i = 0; i < m_m4.size(); i++) {
+        m_m4[i] = i / 100.0;
+        phi_hub[i] = (PI / 18.0) + (4 * PI / 9.0) * m_m4[i];
+        r_hub[i] = (geom.r1h + (geom.r2 - geom.r1h) * (1.0 - (std::cos(phi_hub[i]) / std::cos(PI / 18.0)))) * MM_M;
+        if (m_m4[i] < mj_m4) {
+            phi_tip[i] = (PI / 4.0) * (m_m4[i] / mj_m4);
+            r_tip[i] =
+                (geom.r1t * MM_M) + (1.0 - std::cos(phi_tip[i])) * ((x + (1.0 - sqrt(2.0)) * y) / (2.0 - sqrt(2.0)));
+        } else {
+            phi_tip[i] = (PI / 4.0) * (1.0 + ((m_m4[i] - mj_m4) / (1.0 - mj_m4)));
+            r_tip[i] = (geom.r1t * MM_M) +
+                       (1.0 - std::cos(PI / 4.0)) * ((x + (1.0 - sqrt(2.0)) * y) / (2.0 - sqrt(2.0))) +
+                       (std::cos(PI / 4.0) - std::cos(phi_tip[i])) * ((y + (1.0 - sqrt(2.0)) * x) / (2.0 - sqrt(2.0)));
+        }
+    }
 }
