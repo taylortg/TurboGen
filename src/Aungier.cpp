@@ -25,6 +25,7 @@ Aungier::Aungier(const ImpellerState& inlet, const ImpellerState& outlet, const 
       Re_b2(0.0),
       Re_r2(0.0),
       dH0(0.0),
+      tb1(0.0),
       optimizationFlag(optimizationFlag) {}
 
 Aungier::Aungier(const ThermoProps& thermo, const Geometry& geom, const OperatingCondition& op,
@@ -77,7 +78,7 @@ void Aungier::inletCalcs() {
     inlet.static_ = inlet.total;
 
     // Set blade thickness to 2mm by default
-    double tb1 = 2.0 * MM_M;
+    tb1 = 2.0 * MM_M;
     std::string temp;
     fmt::print("Enter the inlet blade thickness in mm: ");
     std::getline(std::cin, temp);
@@ -98,7 +99,6 @@ void Aungier::inletCalcs() {
         inlet.rms.C_m = op.mfr / (rho1_guess * A1 * (1.0 - geom.blockage1));
         if (op.alpha == 0) {
             inlet.rms.C = inlet.rms.C_m;
-            // fmt::println("inlet.rms.C: {}", inlet.rms.C);
         } else {
             inlet.rms.C = inlet.rms.C_m / std::tan(op.alpha * DEG_RAD);
         }
@@ -246,4 +246,43 @@ void Aungier::throatCalcs() {
                        (std::cos(PI / 4.0) - std::cos(phi_tip[i])) * ((y + (1.0 - sqrt(2.0)) * x) / (2.0 - sqrt(2.0)));
         }
     }
+
+    double mstar_m4_tip = throatLocation(m4_tip, tb1, "tip");
+    double mstar_m4_hub = throatLocation(m4_tip, tb1, "hub");
+    double dbeta_tip = -10.0 * geom.beta1t * mstar_m4_tip;
+    double beta_min = (1.0 / 6.0) * geom.beta2 * (1.0 + (1.0 / 15.0) * geom.beta1h);
+    double dbeta_hub = -4.0 * (geom.beta1h - beta_min) * (1.0 - 2 * mstar_m4_hub);
+    fmt::println("\ndbeta_tip: {}\ndbeta_hub: {}", dbeta_tip, dbeta_hub);
+
+    double beta_star_tip = geom.beta1t * (1.0 - 5 * mstar_m4_tip * mstar_m4_tip);
+    double beta_star_hub = geom.beta1h - 4.0 * (geom.beta1h - beta_min) * mstar_m4_hub * (1.0 - mstar_m4_hub);
+    fmt::println("beta_star_tip: {}\nbeta_star_hub: {}", beta_star_tip, beta_star_hub);
+
+    std::array<double, 101> beta_tip;
+    std::array<double, 101> beta_hub;
+}
+
+double Aungier::throatLocation(double m4, double tb1, std::string location) {
+    fmt::println("\nFinding throat location at impeller {}", location);
+    // Determine where throat is located
+    double s3 = 2 * PI * (geom.r1t * MM_M) / geom.ZFull;
+    double error = 1.0;
+    double mstar_m4 = 0.05;
+    double mstar = mstar_m4 * m4;
+
+    do {
+        double old = mstar_m4;
+        double beta_inf3 = 1.0 - 5 * (mstar_m4 * mstar_m4);
+        double dbeta_inf = -10.0 * beta_inf3 * mstar_m4;
+        mstar = mstar_m4 * m4;
+        double m = 2 * mstar - (tb1 * MM_M);
+        double beta_infa = 1.0 - 5 * std::pow(m / m4, 2.0);
+        double beta_infb = 0.5 * (geom.beta1t + beta_infa);
+        mstar_m4 = ((0.5 * s3) / ((1.0 / std::tan(beta_infa * DEG_RAD)) + std::tan(beta_infb * DEG_RAD))) +
+                   0.5 * (tb1 * MM_M) / m4;
+        error = std::abs(mstar_m4 - old) / old;
+        fmt::println("mstar/m4: {:.6f}\terror: {:.4e}", mstar_m4, error);
+    } while (error > 10e-6);
+
+    return mstar_m4;
 }

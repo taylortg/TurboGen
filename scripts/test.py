@@ -27,10 +27,14 @@ while(error > 10e-6):
     old = mstar_m4
     beta_inf3 = 1.0 - 5*mstar_m4**2
     dbeta_inf = -10.0* beta_inf3*mstar_m4
+    print(f"beta_inf3: {beta_inf3}\ndbeta_inf: {dbeta_inf}")
     mstar = mstar_m4 * m4
     m = 2*mstar - t3
+    print(f"m: {m}")
     beta_infa = 1.0 - 5*(m/m4)**2
+    print(f"beta_infa: {beta_infa}")
     beta_infb = 0.5 * (beta_1t + beta_infa)
+    print(f"beta_infb: {beta_infb}")
     mstar_m4 = ((0.5 * s3) / ((1.0/math.tan(math.radians(beta_infa)))+math.tan(math.radians(beta_infb)))) + 0.5*t3/m4
     error = abs(mstar_m4 - old) / old
-    print(f"mstar_m4: {mstar_m4}\terror: {error}")
+    print(f"mstar_m4: {mstar_m4}\terror: {error}\n")
